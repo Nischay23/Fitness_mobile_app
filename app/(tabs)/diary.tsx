@@ -27,16 +27,18 @@ import {
   isToday,
 } from "date-fns";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import CalorieSummary from "@/modules/diary/components/CalorieSummary";
 import { DiaryList } from "@/modules/diary/components/DiaryList";
 import { useAppStore } from "@/stores/appStore";
-import { COLORS } from "@/constants/theme";
+import { useTheme } from "@/modules/home/hooks/useTheme";
 
+// Optimized constants for better spacing
 const HEADER_HEIGHT = 64;
-const DATE_NAVIGATOR_HEIGHT = 70;
-const CALORIE_SUMMARY_HEIGHT = 90;
-const SCROLL_THRESHOLD = 10;
+const DATE_NAVIGATOR_HEIGHT = 72;
+const CALORIE_SUMMARY_HEIGHT = 100;
+const SCROLL_THRESHOLD = 8;
 const TOTAL_FIXED_HEIGHT =
   HEADER_HEIGHT +
   DATE_NAVIGATOR_HEIGHT +
@@ -46,24 +48,22 @@ const TOTAL_FIXED_HEIGHT =
 const DiaryPage = React.memo(
   ({
     dateString,
-    colorScheme,
     router,
     onScroll,
   }: {
     dateString: string;
-    colorScheme: "light" | "dark";
     router: any;
     onScroll: (event: any) => void;
   }) => {
-    const colors = COLORS[colorScheme];
+    const { colors } = useTheme();
 
     return (
       <FlatList
         ListHeaderComponent={() => (
-          <View style={{ height: 24 }} />
+          <View style={{ height: 16 }} />
         )}
         ListFooterComponent={() => (
-          <View style={{ height: 15 }} />
+          <View style={{ height: 20 }} />
         )}
         data={[{ key: "diary" }]}
         renderItem={() => (
@@ -73,8 +73,9 @@ const DiaryPage = React.memo(
         style={{ backgroundColor: colors.background }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 0,
+          paddingBottom: 10,
           flexGrow: 1,
+          paddingHorizontal: 20,
         }}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -96,10 +97,10 @@ export default function DiaryTab() {
   );
   const [isInitialized, setIsInitialized] = useState(false);
   const pagerRef = useRef<PagerView>(null);
-  const colorScheme = useColorScheme() ?? "light";
-  const colors = COLORS[colorScheme];
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const { currentUser } = useAppStore();
+  const insets = useSafeAreaInsets();
 
   // Animated values for smooth transitions
   const headerTranslateY = useRef(
@@ -153,7 +154,7 @@ export default function DiaryTab() {
 
       if (
         scrollDiff > 0 &&
-        currentScrollY > 50 &&
+        currentScrollY > 40 &&
         isHeaderVisible.current
       ) {
         // Scrolling down - hide header and move other elements up
@@ -162,22 +163,22 @@ export default function DiaryTab() {
         Animated.parallel([
           Animated.timing(headerTranslateY, {
             toValue: -HEADER_HEIGHT,
-            duration: 250,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(dateNavigatorTranslateY, {
             toValue: -HEADER_HEIGHT,
-            duration: 250,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(calorieSummaryTranslateY, {
             toValue: -HEADER_HEIGHT,
-            duration: 250,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(contentTranslateY, {
-            toValue: -HEADER_HEIGHT, // Move content up by the header's height
-            duration: 250,
+            toValue: -HEADER_HEIGHT,
+            duration: 200,
             useNativeDriver: true,
           }),
         ]).start();
@@ -191,22 +192,22 @@ export default function DiaryTab() {
         Animated.parallel([
           Animated.timing(headerTranslateY, {
             toValue: 0,
-            duration: 250,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(dateNavigatorTranslateY, {
             toValue: 0,
-            duration: 250,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(calorieSummaryTranslateY, {
             toValue: 0,
-            duration: 250,
+            duration: 200,
             useNativeDriver: true,
           }),
           Animated.timing(contentTranslateY, {
-            toValue: 0, // Move content back to its original position
-            duration: 250,
+            toValue: 0,
+            duration: 200,
             useNativeDriver: true,
           }),
         ]).start();
@@ -270,9 +271,7 @@ export default function DiaryTab() {
       >
         <StatusBar
           barStyle={
-            colorScheme === "dark"
-              ? "light-content"
-              : "dark-content"
+            isDark ? "light-content" : "dark-content"
           }
           backgroundColor={colors.background}
         />
@@ -306,9 +305,7 @@ export default function DiaryTab() {
       >
         <StatusBar
           barStyle={
-            colorScheme === "dark"
-              ? "light-content"
-              : "dark-content"
+            isDark ? "light-content" : "dark-content"
           }
           backgroundColor={colors.background}
         />
@@ -323,18 +320,14 @@ export default function DiaryTab() {
   }
 
   return (
-    <SafeAreaView
+    <View
       style={{
         flex: 1,
         backgroundColor: colors.background,
       }}
     >
       <StatusBar
-        barStyle={
-          colorScheme === "dark"
-            ? "light-content"
-            : "dark-content"
-        }
+        barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor={colors.background}
       />
 
@@ -344,35 +337,42 @@ export default function DiaryTab() {
         }}
       />
 
-      {/* Animated Header - Diary Title and Back Button */}
+      {/* Compact Professional Header */}
       <Animated.View
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          height: HEADER_HEIGHT,
-          backgroundColor: colors.surface,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          height: HEADER_HEIGHT + insets.top,
+          backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+          paddingTop: insets.top,
+          paddingHorizontal: 20,
+          paddingBottom: 12,
           zIndex: 30,
           transform: [{ translateY: headerTranslateY }],
-          shadowColor: "#000",
+          shadowColor: isDark ? "#000" : "#000",
           shadowOffset: {
             width: 0,
             height: 2,
           },
-          shadowOpacity: 0.1,
-          shadowRadius: 3.84,
-          elevation: 5,
+          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowRadius: 8,
+          elevation: 4,
+          borderBottomWidth: isDark ? 0 : 1,
+          borderBottomColor: isDark
+            ? "transparent"
+            : colors.border + "20",
         }}
       >
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center justify-between h-full">
           <Pressable
             onPress={() => router.back()}
-            className="w-9 h-9 items-center justify-center rounded-full"
+            className="w-10 h-10 items-center justify-center rounded-xl"
             style={{
-              backgroundColor: colors.surfaceElevated,
+              backgroundColor: isDark
+                ? "#2a2a2a"
+                : colors.surface,
             }}
           >
             <Feather
@@ -382,29 +382,46 @@ export default function DiaryTab() {
             />
           </Pressable>
 
-          <Text
-            style={{ color: colors.text.primary }}
-            className="text-lg font-bold"
-          >
-            Diary
-          </Text>
+          <View className="items-center flex-1">
+            <Text
+              style={{ color: colors.text.primary }}
+              className="text-xl font-bold"
+            >
+              My Diary
+            </Text>
+          </View>
 
-          <View className="w-9" />
+          <Pressable
+            className="w-10 h-10 items-center justify-center rounded-xl"
+            style={{
+              backgroundColor: isDark
+                ? "#2a2a2a"
+                : colors.surface,
+            }}
+          >
+            <Feather
+              name="more-horizontal"
+              size={18}
+              color={colors.text.secondary}
+            />
+          </Pressable>
         </View>
       </Animated.View>
 
-      {/* Animated Date Navigator */}
+      {/* Streamlined Date Navigator */}
       <Animated.View
         style={{
           position: "absolute",
-          top: HEADER_HEIGHT,
+          top: HEADER_HEIGHT + insets.top,
           left: 0,
           right: 0,
           height: DATE_NAVIGATOR_HEIGHT,
-          backgroundColor: colors.surface,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-          paddingVertical: 10,
+          backgroundColor: isDark ? "#1f1f1f" : "#f8f9fa",
+          borderBottomWidth: isDark ? 0 : 1,
+          borderBottomColor: isDark
+            ? "transparent"
+            : colors.border + "15",
+          paddingVertical: 12,
           paddingHorizontal: 20,
           zIndex: 25,
           transform: [
@@ -415,29 +432,34 @@ export default function DiaryTab() {
         <View className="flex-row items-center justify-between flex-1">
           <Pressable
             onPress={() => changeDate(-1)}
-            className="w-8 h-8 items-center justify-center rounded-full"
+            className="w-10 h-10 items-center justify-center rounded-full"
             style={{
-              backgroundColor: colors.surfaceElevated,
+              backgroundColor: isDark
+                ? "#2a2a2a"
+                : "#ffffff",
+              shadowColor: isDark ? "#000" : "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: isDark ? 0.3 : 0.1,
+              shadowRadius: 3,
+              elevation: 2,
             }}
           >
             <Feather
               name="chevron-left"
-              size={16}
+              size={18}
               color={colors.text.primary}
             />
           </Pressable>
 
-          <View className="items-center">
+          <View className="items-center flex-1 mx-4">
             <Text
               style={{
                 color: isToday(currentDate)
-                  ? "#007AFF"
+                  ? "#059669"
                   : colors.text.primary,
-                fontWeight: isToday(currentDate)
-                  ? "700"
-                  : "600",
+                fontWeight: "700",
               }}
-              className="text-base"
+              className="text-lg"
             >
               {isToday(currentDate)
                 ? "Today"
@@ -446,11 +468,10 @@ export default function DiaryTab() {
             <Text
               style={{
                 color: isToday(currentDate)
-                  ? "#007AFF"
+                  ? "#059669" + "CC"
                   : colors.text.secondary,
-                opacity: isToday(currentDate) ? 0.8 : 1,
               }}
-              className="text-xs mt-0.5"
+              className="text-sm mt-0.5 font-medium"
             >
               {format(currentDate, "MMM d, yyyy")}
             </Text>
@@ -458,38 +479,50 @@ export default function DiaryTab() {
 
           <Pressable
             onPress={() => changeDate(1)}
-            className="w-8 h-8 items-center justify-center rounded-full"
+            className="w-10 h-10 items-center justify-center rounded-full"
             style={{
-              backgroundColor: colors.surfaceElevated,
+              backgroundColor: isDark
+                ? "#2a2a2a"
+                : "#ffffff",
+              shadowColor: isDark ? "#000" : "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: isDark ? 0.3 : 0.1,
+              shadowRadius: 3,
+              elevation: 2,
             }}
           >
             <Feather
               name="chevron-right"
-              size={16}
+              size={18}
               color={colors.text.primary}
             />
           </Pressable>
         </View>
       </Animated.View>
 
-      {/* Animated Calories Summary */}
+      {/* Compact Calories Summary */}
       <Animated.View
         style={{
           position: "absolute",
-          top: HEADER_HEIGHT + DATE_NAVIGATOR_HEIGHT,
+          top:
+            HEADER_HEIGHT +
+            DATE_NAVIGATOR_HEIGHT +
+            insets.top,
           left: 0,
           right: 0,
           height: CALORIE_SUMMARY_HEIGHT,
           zIndex: 20,
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           transform: [
             { translateY: calorieSummaryTranslateY },
           ],
         }}
       >
-        <CalorieSummary
-          dateString={format(currentDate, "yyyy-MM-dd")}
-        />
+        <View className="px-5 pt-3 pb-2">
+          <CalorieSummary
+            dateString={format(currentDate, "yyyy-MM-dd")}
+          />
+        </View>
       </Animated.View>
 
       {/* Content Area with PagerView */}
@@ -500,7 +533,11 @@ export default function DiaryTab() {
           transform: [{ translateY: contentTranslateY }],
         }}
       >
-        <View style={{ height: TOTAL_FIXED_HEIGHT }} />
+        <View
+          style={{
+            height: TOTAL_FIXED_HEIGHT + insets.top,
+          }}
+        />
         <PagerView
           ref={pagerRef}
           style={{ flex: 1 }}
@@ -519,7 +556,6 @@ export default function DiaryTab() {
             >
               <DiaryPage
                 dateString={format(date, "yyyy-MM-dd")}
-                colorScheme={colorScheme}
                 router={router}
                 onScroll={handleScroll}
               />
@@ -527,6 +563,6 @@ export default function DiaryTab() {
           ))}
         </PagerView>
       </Animated.View>
-    </SafeAreaView>
+    </View>
   );
 }

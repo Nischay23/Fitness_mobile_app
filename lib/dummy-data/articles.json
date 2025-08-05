@@ -1,0 +1,192 @@
+[
+  {
+    "id": "art001",
+    "category": "Training",
+    "title": "HIIT vs. Cardio: Which Burns More Fat?",
+    "headline": "The eternal fitness debate: High-Intensity Interval Training versus traditional steady-state cardio.",
+    "author": "Fitness Coach",
+    "readTime": 5,
+    "imageUrl": "https://images.pexels.com/photos/1552106/pexels-photo-1552106.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Understanding HIIT</h1><p>High-Intensity Interval Training (HIIT) involves short, intense bursts of all-out effort followed by brief recovery periods.</p><h2>The Benefits of Steady-State Cardio</h2><p>Steady-state cardio, like jogging, helps build endurance and is beginner-friendly.</p><h3>Which is better?</h3><p>It depends—HIIT burns more calories fast, but cardio helps long-term heart health. Mix both!</p>"
+  },
+  {
+    "id": "art002",
+    "category": "Nutrition",
+    "title": "The Truth About Pre-Workout Meals",
+    "headline": "Fuel your body correctly to maximize performance and results. What should you really be eating?",
+    "author": "Dr. Nutrition",
+    "readTime": 4,
+    "imageUrl": "https://images.unsplash.com/photo-1708335583165-57aa131a4969?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHByZXdvcmtvdXQlMjBtZWFsc3xlbnwwfHwwfHx8MA%3D%3D",
+    "content": "<h1>Timing is Everything</h1><p>Eat 60–90 minutes before your workout for best digestion and energy.</p><h2>What to Eat?</h2><p>Go for oats + banana + peanut butter or whole-grain toast with eggs. Avoid heavy, greasy food.</p>"
+  },
+  {
+    "id": "art003",
+    "category": "Wellness",
+    "title": "Your Ultimate Morning Stretch Routine",
+    "headline": "Start your day with energy and flexibility. This 10-minute routine can change your entire day.",
+    "author": "Yoga Instructor",
+    "readTime": 10,
+    "imageUrl": "https://images.pexels.com/photos/4056536/pexels-photo-4056536.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Wake Up Your Spine</h1><p>Start with Cat-Cow pose, 5-10 reps to mobilize your spine.</p><h2>Open Your Hips</h2><p>Low lunges stretch your hip flexors and counter desk-sitting effects.</p>"
+  },
+  {
+    "id": "art009",
+    "category": "Cardio",
+    "title": "The Benefits of High-Intensity Interval Training (HIIT)",
+    "headline": "Boost your endurance and burn more calories in less time with HIIT workouts.",
+    "author": "Fitness Coach",
+    "readTime": 5,
+    "imageUrl": "https://images.pexels.com/photos/3822285/pexels-photo-3822285.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>What is HIIT?</h1><p>Short bursts of intense effort + short rests = max burn!</p><h2>Workout Structure</h2><p>Try 30s on / 30s off for 20 minutes.</p><h2>Benefits & Risks</h2><p>Fast calorie burn, but be mindful of form to avoid injury.</p>"
+  },
+  {
+    "id": "art010",
+    "category": "Nutrition",
+    "title": "Understanding Macronutrients for a Balanced Diet",
+    "headline": "Learn about carbohydrates, proteins, and fats, and how to balance them for your fitness goals.",
+    "author": "Dietitian",
+    "readTime": 8,
+    "imageUrl": "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>The Big Three</h1><p>Carbs = fuel, Protein = repair, Fats = support hormones.</p><h2>Balance is Key</h2><p>Include all three macronutrients in each meal for optimal energy.</p>"
+  },
+  {
+    "id": "art011",
+    "category": "Flexibility",
+    "title": "Yoga for Athletes: Enhancing Performance and Preventing Injury",
+    "headline": "Integrate yoga into your routine to boost flexibility, balance, and mental focus.",
+    "author": "Yoga Instructor",
+    "readTime": 7,
+    "imageUrl": "https://images.pexels.com/photos/3823063/pexels-photo-3823063.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Beyond Stretching</h1><p>Yoga improves flexibility, balance, and core strength.</p><h2>Key Poses</h2><p>Try Warrior II, Downward Dog, and Pigeon Pose for flexibility.</p>"
+  },
+  {
+    "id": "art012",
+    "category": "Home Workout",
+    "title": "Effective Bodyweight Exercises You Can Do Anywhere",
+    "headline": "No gym, no problem! Get a full-body workout using just your own weight.",
+    "author": "Online Coach",
+    "readTime": 6,
+    "imageUrl": "https://images.pexels.com/photos/4498294/pexels-photo-4498294.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>The Power of Bodyweight</h1><p>Push-ups, squats, planks—great for full-body strength without equipment.</p>"
+  },
+  {
+    "id": "art013",
+    "category": "Wellness",
+    "title": "The Importance of Sleep for Fitness and Overall Health",
+    "headline": "Discover how quality sleep impacts muscle recovery, hormone balance, and cognitive function.",
+    "author": "Sleep Specialist",
+    "readTime": 5,
+    "imageUrl": "https://images.pexels.com/photos/4107287/pexels-photo-4107287.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Why Sleep Matters</h1><p>Muscle recovery, memory, mood—all improved by quality sleep.</p><h2>Tips</h2><p>Limit screens, stick to schedule, and create a calm environment.</p>"
+  },
+  {
+    "id": "art014",
+    "category": "Mindfulness",
+    "title": "Mindful Eating for Better Digestion and Weight Management",
+    "headline": "Learn to listen to your body's hunger cues and enjoy your food more fully.",
+    "author": "Holistic Nutritionist",
+    "readTime": 6,
+    "imageUrl": "https://images.pexels.com/photos/1656661/pexels-photo-1656661.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>What is Mindful Eating?</h1><p>Slow down, chew well, and really enjoy your food.</p><h2>Benefits</h2><p>Better digestion, satisfaction, and portion control.</p>"
+  },
+  {
+    "id": "art015",
+    "category": "Injury Prevention",
+    "title": "Warm-Up and Cool-Down Routines: Essential for Every Workout",
+    "headline": "Prevent injuries and enhance performance with proper pre and post-workout routines.",
+    "author": "Physical Therapist",
+    "readTime": 4,
+    "imageUrl": "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Warm-Up First</h1><p>5–10 mins of dynamic movement preps your body.</p><h2>Cool Down</h2><p>Stretch post-workout to reduce soreness and recover faster.</p>"
+  },
+  {
+    "id": "art016",
+    "category": "Mental Health",
+    "title": "Exercise and Mental Well-being: A Powerful Connection",
+    "headline": "Discover how physical activity can significantly boost your mood and reduce stress.",
+    "author": "Psychologist",
+    "readTime": 5,
+    "imageUrl": "https://images.pexels.com/photos/3757372/pexels-photo-3757372.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Feel-Good Hormones</h1><p>Exercise releases endorphins that improve mood and fight anxiety.</p>"
+  },
+  {
+    "id": "art017",
+    "category": "Equipment",
+    "title": "Choosing the Right Running Shoes for Your Foot Type",
+    "headline": "Find the perfect pair to support your feet, prevent injury, and optimize your runs.",
+    "author": "Podiatrist",
+    "readTime": 7,
+    "imageUrl": "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Know Your Foot</h1><p>Are you flat-footed or high-arched? The right shoe prevents injury.</p><h2>Pronation</h2><p>Match your pronation type to the correct shoe design.</p>"
+  },
+  {
+    "id": "art018",
+    "category": "Diet",
+    "title": "Plant-Based Power: Fueling Your Workouts with Vegan Nutrition",
+    "headline": "Explore how a well-planned plant-based diet can support peak athletic performance.",
+    "author": "Vegan Dietitian",
+    "readTime": 9,
+    "imageUrl": "https://images.pexels.com/photos/1640773/pexels-photo-1640773.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Complete Protein</h1><p>Mix lentils, grains, and nuts to get full amino acid profiles.</p>"
+  },
+  {
+    "id": "art019",
+    "category": "Recovery",
+    "title": "Effective Post-Workout Recovery Techniques",
+    "headline": "Speed up muscle recovery and reduce soreness with these proven strategies.",
+    "author": "Sports Therapist",
+    "readTime": 6,
+    "imageUrl": "https://images.pexels.com/photos/3823039/pexels-photo-3823039.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Importance of Recovery</h1><p>Stretch, hydrate, and foam roll to reduce soreness and aid repair.</p>"
+  },
+  {
+    "id": "art020",
+    "category": "Nutrition",
+    "title": "Perfect Pre-Workout Snacks to Boost Performance",
+    "headline": "Quick and nourishing snacks to energize your workout without weighing you down.",
+    "author": "Nutritionist",
+    "readTime": 4,
+    "imageUrl": "https://images.pexels.com/photos/5937896/pexels-photo-5937896.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Snack Ideas</h1><ul><li>Banana + nut butter</li><li>Greek yogurt + berries</li><li>Oats balls</li></ul>"
+  },
+  {
+    "id": "art021",
+    "category": "Flexibility",
+    "title": "Morning Yoga Flow to Wake Up Your Body",
+    "headline": "A gentle yoga sequence to energize and prepare you for the day ahead.",
+    "author": "Yoga Instructor",
+    "readTime": 7,
+    "imageUrl": "https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Wake Up Routine</h1><p>Cat-Cow, Downward Dog, and Lunges to open hips and spine.</p>"
+  },
+  {
+    "id": "art022",
+    "category": "Strength Training",
+    "title": "Beginner’s Guide to Strength Training",
+    "headline": "Build muscle, increase metabolism, and feel stronger with this beginner-friendly guide.",
+    "author": "Strength Coach",
+    "readTime": 7,
+    "imageUrl": "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Where to Start</h1><p>Use bodyweight exercises and light weights. Master form first.</p>"
+  },
+  {
+    "id": "art023",
+    "category": "Hydration",
+    "title": "Hydration 101: How Much Water Do You Really Need?",
+    "headline": "Proper hydration supports metabolism, energy levels, and workout performance.",
+    "author": "Wellness Expert",
+    "readTime": 5,
+    "imageUrl": "https://images.pexels.com/photos/3768918/pexels-photo-3768918.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Water = Life</h1><p>Aim for 2–3L daily. More during workouts or hot days.</p>"
+  },
+  {
+    "id": "art024",
+    "category": "Mindfulness",
+    "title": "5-Minute Meditation for Busy People",
+    "headline": "Recharge your mind and reduce stress in just 5 minutes—no experience needed.",
+    "author": "Mindfulness Coach",
+    "readTime": 3,
+    "imageUrl": "https://images.pexels.com/photos/2908175/pexels-photo-2908175.jpeg?auto=compress&cs=tinysrgb&h=650&w=1470",
+    "content": "<h1>Quick Calm</h1><p>Use deep breathing—inhale 4s, hold 4s, exhale 4s. Repeat for peace.</p>"
+  }
+]

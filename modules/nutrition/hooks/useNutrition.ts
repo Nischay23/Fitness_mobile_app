@@ -27,15 +27,25 @@ export const useNutrition = () => {
   const [searchHistory, setSearchHistory] = useState<
     FoodItem[]
   >([]);
+  const [defaultSuggestedFoods, setDefaultSuggestedFoods] =
+    useState<FoodItem[]>([]);
   const [isAddingFood, setIsAddingFood] = useState<
     string | null
   >(null);
 
-  // Initialize database on first load
+  // Initialize database and load suggested foods
   useEffect(() => {
     const initializeDatabase = async () => {
       try {
         await seedFoodDatabase();
+
+        // Load some default suggested foods from the database
+        const allFoods = await searchFoods(""); // Get all foods
+        const suggestedItems = allFoods
+          .slice(0, 6) // Take first 6 foods
+          .map(foodModelToItem);
+        setDefaultSuggestedFoods(suggestedItems);
+
         setIsInitialized(true);
         console.log("✅ Database initialized successfully");
       } catch (error) {
@@ -117,10 +127,13 @@ export const useNutrition = () => {
     [currentUser]
   );
 
-  // Get suggested foods (most recent from search history)
+  // Get suggested foods (recent searches + default suggestions)
   const suggestedFoods = useMemo(() => {
-    return searchHistory.slice(0, 5);
-  }, [searchHistory]); // This value is only re-calculated when searchHistory changes.
+    if (searchHistory.length > 0) {
+      return searchHistory.slice(0, 6);
+    }
+    return defaultSuggestedFoods;
+  }, [searchHistory, defaultSuggestedFoods]);
 
   const searchResultsUI = useMemo(() => {
     return searchResults.map(foodModelToItem);

@@ -1,6 +1,8 @@
-// db/models/Food.ts
 import { Model } from "@nozbe/watermelondb";
-import { field, text } from "@nozbe/watermelondb/decorators";
+import {
+  field,
+  text,
+} from "@nozbe/watermelondb/decorators";
 
 export class Food extends Model {
   static table = "foods";

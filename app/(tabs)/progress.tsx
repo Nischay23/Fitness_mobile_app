@@ -16,7 +16,12 @@ import { useAppStore } from "@/stores/appStore";
 import { WeightEntry } from "@/db/models/WeightEntry";
 import { observeWeightHistory } from "@/db/actions/progressActions";
 import { WeightChart } from "@/modules/progress/components/WeightChart";
-import { format, subDays, subMonths, subYears } from "date-fns";
+import {
+  format,
+  subDays,
+  subMonths,
+  subYears,
+} from "date-fns";
 import { COLORS } from "@/constants/theme";
 import { database } from "@/db";
 import { Q } from "@nozbe/watermelondb";
@@ -54,10 +59,13 @@ const ProgressScreen = () => {
   const colors = COLORS[colorScheme];
   const router = useRouter();
   const { currentUser } = useAppStore();
-  const [weightHistory, setWeightHistory] = React.useState<WeightEntry[]>([]);
+  const [weightHistory, setWeightHistory] = React.useState<
+    WeightEntry[]
+  >([]);
   const [selectedPeriod, setSelectedPeriod] =
     React.useState<GraphPeriod>("all");
-  const [showPeriodModal, setShowPeriodModal] = React.useState(false);
+  const [showPeriodModal, setShowPeriodModal] =
+    React.useState(false);
 
   // Subscribe to weight history changes
   React.useEffect(() => {
@@ -68,10 +76,17 @@ const ProgressScreen = () => {
 
     const subscription = database.collections
       .get<WeightEntry>("weight_entries")
-      .query(Q.where("user_id", currentUser.id), Q.sortBy("date", Q.desc))
+      .query(
+        Q.where("user_id", currentUser.id),
+        Q.sortBy("date", Q.desc)
+      )
       .observe()
       .subscribe((entries) => {
-        console.log("📊 Weight history updated:", entries.length, "entries");
+        console.log(
+          "📊 Weight history updated:",
+          entries.length,
+          "entries"
+        );
         setWeightHistory(entries);
       });
 
@@ -80,7 +95,8 @@ const ProgressScreen = () => {
 
   // Filter weight history based on selected period
   const filteredWeightHistory = React.useMemo(() => {
-    if (!weightHistory || weightHistory.length === 0) return [];
+    if (!weightHistory || weightHistory.length === 0)
+      return [];
 
     const now = new Date();
     let cutoffDate: Date | null = null;
@@ -144,8 +160,9 @@ const ProgressScreen = () => {
 
   const getSelectedPeriodLabel = () => {
     return (
-      GRAPH_PERIOD_OPTIONS.find((option) => option.id === selectedPeriod)
-        ?.label || "All"
+      GRAPH_PERIOD_OPTIONS.find(
+        (option) => option.id === selectedPeriod
+      )?.label || "All"
     );
   };
 
@@ -154,11 +171,14 @@ const ProgressScreen = () => {
       style={{
         flex: 1,
         backgroundColor: colors.background,
-        paddingTop: StatusBar.currentHeight || 0, // Only add status bar height
       }}
     >
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        barStyle={
+          colorScheme === "dark"
+            ? "light-content"
+            : "dark-content"
+        }
         backgroundColor={colors.background}
       />
 
@@ -175,15 +195,17 @@ const ProgressScreen = () => {
           alignItems: "center",
           justifyContent: "space-between",
           paddingHorizontal: 20,
-          paddingVertical: -10,
-          paddingTop: -10,
-          marginTop: -8,
-          marginBottom: 8,
+          paddingVertical: 8,
+          paddingTop: 16,
           backgroundColor: colors.background,
         }}
       >
         <Pressable onPress={handleBackPress}>
-          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={colors.text.primary}
+          />
         </Pressable>
 
         <Text
@@ -198,12 +220,19 @@ const ProgressScreen = () => {
 
         <Link href="/(modals)/log-weight" asChild>
           <Pressable>
-            <Ionicons name="add" size={28} color={colors.text.primary} />
+            <Ionicons
+              name="add"
+              size={28}
+              color={colors.text.primary}
+            />
           </Pressable>
         </Link>
       </View>
 
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Filter Section - MyFitnessPal Style */}
         <View
           style={{
@@ -232,7 +261,10 @@ const ProgressScreen = () => {
             />
             <Text
               style={{
-                color: colors.primary,
+                color:
+                  colorScheme === "dark"
+                    ? colors.primary
+                    : "#2563EB",
                 fontSize: 16,
                 fontWeight: "600",
               }}
@@ -259,7 +291,10 @@ const ProgressScreen = () => {
             />
             <Text
               style={{
-                color: colors.primary,
+                color:
+                  colorScheme === "dark"
+                    ? colors.primary
+                    : "#2563EB",
                 fontSize: 16,
                 fontWeight: "600",
               }}
@@ -329,7 +364,10 @@ const ProgressScreen = () => {
                     alignItems: "center",
                     paddingVertical: 16,
                     borderBottomWidth:
-                      index < filteredWeightHistory.length - 1 ? 1 : 0,
+                      index <
+                      filteredWeightHistory.length - 1
+                        ? 1
+                        : 0,
                     borderBottomColor: colors.border,
                   }}
                 >
@@ -341,7 +379,10 @@ const ProgressScreen = () => {
                         fontWeight: "500",
                       }}
                     >
-                      {format(new Date(entry.date), "EEEE d MMM yyyy")}
+                      {format(
+                        new Date(entry.date),
+                        "EEEE d MMM yyyy"
+                      )}
                     </Text>
                   </View>
 
@@ -410,7 +451,7 @@ const ProgressScreen = () => {
         </View>
 
         {/* Bottom padding for tab bar */}
-        <View style={{ height: 100 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
 
       {/* Graph Period Selection Modal */}
@@ -456,7 +497,9 @@ const ProgressScreen = () => {
             {GRAPH_PERIOD_OPTIONS.map((option) => (
               <Pressable
                 key={option.id}
-                onPress={() => handlePeriodSelect(option.id)}
+                onPress={() =>
+                  handlePeriodSelect(option.id)
+                }
                 style={{
                   flexDirection: "row",
                   alignItems: "center",

@@ -1,450 +1,314 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../hooks/useTheme";
 import { useHomeStore } from "../store/homeStore";
+import { ProgressRing } from "./ProgressRing";
+import { useTheme } from "../hooks/useTheme";
 
+type MacroCircleProps = {
+  label: string;
+  goal: number;
+  short: string;
+  color: string;
+  current: number;
+  isDark: boolean;
+};
+
+const MacroCircle: React.FC<MacroCircleProps> = ({
+  label,
+  short,
+  current,
+  goal,
+  color,
+  isDark,
+}) => {
+  // Conditional text colors
+  const labelColor = isDark
+    ? "text-slate-200"
+    : "text-slate-700";
+  const valueColor = isDark
+    ? "text-slate-400"
+    : "text-slate-500";
+
+  return (
+    <View className="items-center flex-1">
+      {/* Progress Ring */}
+      <View className="relative w-12 h-12 justify-center items-center mb-2">
+        <ProgressRing
+          progress={goal > 0 ? current / goal : 0}
+          size={44}
+          strokeWidth={4}
+          backgroundColor={isDark ? "#1E293B" : "#F1F5F9"}
+          progressColor={color}
+          isDark={isDark}
+        />
+        <Text
+          className="absolute font-bold text-xs"
+          style={{ color }}
+        >
+          {short}
+        </Text>
+      </View>
+
+      {/* Labels */}
+      <Text
+        className={`font-medium text-xs mb-1 ${labelColor}`}
+      >
+        {label}
+      </Text>
+      <Text
+        className={`text-xs font-semibold ${valueColor}`}
+      >
+        {Math.round(current)}g
+      </Text>
+      <Text
+        className="text-xs font-bold mt-0.5"
+        style={{ color }}
+      >
+        {goal > 0 ? Math.round((current / goal) * 100) : 0}%
+      </Text>
+    </View>
+  );
+};
+
+// Main HeroSection Component
 export const HeroSection: React.FC = () => {
-  const { colors, fitnessColors, isDark } = useTheme();
   const { todayStats } = useHomeStore();
+  const { isDark } = useTheme();
 
-  // Calculate calorie progress
-  const caloriesRemaining =
-    todayStats.caloriesGoal -
-    todayStats.caloriesConsumed +
-    todayStats.caloriesBurned;
+  // Colors and classes based on theme
+  const containerBg = isDark ? "bg-gray-900" : "bg-white";
+  const headerBg = isDark ? "bg-black/20" : "bg-white/50";
+  const headerText = isDark
+    ? "text-white"
+    : "text-gray-900";
+  const subText = isDark
+    ? "text-gray-400"
+    : "text-gray-600";
+
+  const caloriesRemaining = Math.max(
+    0,
+    todayStats.caloriesGoal - todayStats.caloriesConsumed
+  );
   const calorieProgress =
-    (todayStats.caloriesConsumed / todayStats.caloriesGoal) * 100;
+    todayStats.caloriesGoal > 0
+      ? todayStats.caloriesConsumed /
+        todayStats.caloriesGoal
+      : 0;
 
-  // Calculate macro progress
   const macros = [
     {
       label: "Protein",
       short: "P",
       current: todayStats.proteinConsumed,
       goal: todayStats.proteinGoal,
-      percentage: (todayStats.proteinConsumed / todayStats.proteinGoal) * 100,
-      color: fitnessColors.protein,
+      color: "#3B82F6",
     },
     {
       label: "Carbs",
       short: "C",
       current: todayStats.carbsConsumed,
       goal: todayStats.carbsGoal,
-      percentage: (todayStats.carbsConsumed / todayStats.carbsGoal) * 100,
-      color: fitnessColors.carbs,
+      color: "#F59E0B",
     },
     {
       label: "Fat",
       short: "F",
       current: todayStats.fatConsumed,
       goal: todayStats.fatGoal,
-      percentage: (todayStats.fatConsumed / todayStats.fatGoal) * 100,
-      color: fitnessColors.fat,
+      color: "#8B5CF6",
     },
   ];
 
-  const renderCalorieRing = () => {
-    const size = 120;
-    const strokeWidth = 10;
-    const innerStrokeWidth = 6;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const strokeDasharray = circumference;
-    const strokeDashoffset =
-      circumference - (Math.min(calorieProgress, 100) / 100) * circumference;
-
-    return (
-      <View
-        style={{
-          width: size,
-          height: size,
-          position: "relative",
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-      >
-        {/* Outer Glow Background */}
-        <View
-          style={{
-            position: "absolute",
-            width: size + 4,
-            height: size + 4,
-            borderRadius: (size + 4) / 2,
-            backgroundColor: colors.primary + "08",
-            top: -2,
-            left: -2,
-          }}
-        />
-
-        {/* Background Ring */}
-        <View
-          style={{
-            position: "absolute",
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: isDark ? colors.border + "40" : colors.border + "60",
-          }}
-        />
-
-        {/* Progress Ring - Multiple layers for gradient effect */}
-        <View
-          style={{
-            position: "absolute",
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: "transparent",
-            borderTopColor: calorieProgress <= 100 ? colors.primary : "#FF6B6B",
-            borderRightColor:
-              calorieProgress > 25
-                ? calorieProgress <= 100
-                  ? colors.primary
-                  : "#FF6B6B"
-                : "transparent",
-            borderBottomColor:
-              calorieProgress > 50
-                ? calorieProgress <= 100
-                  ? colors.primary
-                  : "#FF6B6B"
-                : "transparent",
-            borderLeftColor:
-              calorieProgress > 75
-                ? calorieProgress <= 100
-                  ? colors.primary
-                  : "#FF6B6B"
-                : "transparent",
-            transform: [{ rotate: "-90deg" }],
-          }}
-        />
-
-        {/* Inner Ring for depth */}
-        <View
-          style={{
-            position: "absolute",
-            width: size - innerStrokeWidth,
-            height: size - innerStrokeWidth,
-            borderRadius: (size - innerStrokeWidth) / 2,
-            borderWidth: 1,
-            borderColor: colors.primary + "20",
-            top: innerStrokeWidth / 2,
-            left: innerStrokeWidth / 2,
-          }}
-        />
-
-        {/* Center Content with enhanced styling */}
-        <View
-          style={{
-            position: "absolute",
-            width: size - strokeWidth * 2,
-            height: size - strokeWidth * 2,
-            borderRadius: (size - strokeWidth * 2) / 2,
-            top: strokeWidth,
-            left: strokeWidth,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: colors.surface,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: isDark ? 0.3 : 0.1,
-            shadowRadius: 3,
-            elevation: 2,
-          }}
-        >
-          <View style={{ alignItems: "center" }}>
-            <Text
-              style={{
-                fontSize: 22,
-                fontWeight: "800",
-                color: colors.text.primary,
-                textShadowColor: colors.primary + "30",
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 2,
-              }}
-            >
-              {todayStats.caloriesConsumed.toLocaleString()}
-            </Text>
-            <View
-              style={{
-                backgroundColor: colors.primary + "15",
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: 10,
-                marginTop: 2,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  color: colors.text.secondary,
-                  fontWeight: "600",
-                }}
-              >
-                of {(todayStats.caloriesGoal / 1000).toFixed(1)}k
-              </Text>
-            </View>
-            <Text
-              style={{
-                fontSize: 9,
-                color: caloriesRemaining > 0 ? colors.primary : "#FF6B6B",
-                marginTop: 3,
-                fontWeight: "600",
-                textAlign: "center",
-              }}
-            >
-              {Math.abs(caloriesRemaining)}{" "}
-              {caloriesRemaining > 0 ? "left" : "over"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Progress indicator dot */}
-        {calorieProgress > 0 && (
-          <View
-            style={{
-              position: "absolute",
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor:
-                calorieProgress <= 100 ? colors.primary : "#FF6B6B",
-              top: strokeWidth - 4,
-              left: size / 2 - 4,
-              shadowColor: calorieProgress <= 100 ? colors.primary : "#FF6B6B",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.5,
-              shadowRadius: 4,
-              elevation: 3,
-              transform: [
-                {
-                  translateX:
-                    Math.cos(
-                      (calorieProgress / 100) * 2 * Math.PI - Math.PI / 2
-                    ) * radius,
-                },
-                {
-                  translateY:
-                    Math.sin(
-                      (calorieProgress / 100) * 2 * Math.PI - Math.PI / 2
-                    ) * radius,
-                },
-              ],
-            }}
-          />
-        )}
-      </View>
-    );
-  };
-
   return (
     <View
-      className="mx-4 my-2 p-3 rounded-2xl"
-      style={{ backgroundColor: colors.surface }}
+      className={`${containerBg} rounded-3xl mx-4 my-3 overflow-hidden`}
     >
-      {/* Compact Header */}
-      <View className="flex-row justify-between items-center mb-3">
+      {/* Glass-morphic Header */}
+      <View
+        className={`${headerBg} backdrop-blur-lg px-4 py-3 flex-row justify-between items-center`}
+      >
         <View>
           <Text
-            className="text-base font-semibold"
-            style={{ color: colors.text.primary }}
+            className={`font-bold text-lg ${headerText}`}
           >
             Today's Progress
           </Text>
-          <Text className="text-xs" style={{ color: colors.text.secondary }}>
+          <Text
+            className={`text-xs font-medium ${subText}`}
+          >
             {new Date().toLocaleDateString("en-US", {
-              weekday: "short",
+              weekday: "long",
               month: "short",
               day: "numeric",
             })}
           </Text>
         </View>
-        <TouchableOpacity
-          className="p-1.5 rounded-full"
-          style={{ backgroundColor: colors.primary + "20" }}
+        <Pressable
+          className="w-9 h-9 rounded-xl justify-center items-center"
+          style={{
+            backgroundColor: isDark
+              ? "rgba(255,255,255,0.1)"
+              : "rgba(0,0,0,0.05)",
+          }}
         >
           <Ionicons
             name="notifications-outline"
-            size={16}
-            color={colors.primary}
+            size={18}
+            color={isDark ? "#CBD5E1" : "#334155"}
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      {/* Main Content Row */}
-      <View className="flex-row items-center justify-between">
+      {/* Main Content Area */}
+      <View className="p-4 flex-row items-center justify-between">
         {/* Calorie Ring */}
-        <View className="items-center">{renderCalorieRing()}</View>
-
-        {/* Macros and Stats */}
-        <View className="flex-1 ml-4">
-          {/* Enhanced Macro Row */}
-          <View className="flex-row justify-between mb-3">
-            {macros.map((macro, index) => (
-              <View key={index} className="items-center">
-                {/* Macro Circle with Progress Ring */}
-                <View style={{ position: "relative", marginBottom: 4 }}>
-                  <View
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 18,
-                      backgroundColor: macro.color + "20",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      borderWidth: 2,
-                      borderColor: macro.color + "40",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        fontWeight: "800",
-                        color: macro.color,
-                      }}
-                    >
-                      {macro.short}
-                    </Text>
-                  </View>
-
-                  {/* Mini Progress Ring */}
-                  <View
-                    style={{
-                      position: "absolute",
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      borderWidth: 2,
-                      borderColor: "transparent",
-                      borderTopColor:
-                        macro.percentage >= 25 ? macro.color : "transparent",
-                      borderRightColor:
-                        macro.percentage >= 50 ? macro.color : "transparent",
-                      borderBottomColor:
-                        macro.percentage >= 75 ? macro.color : "transparent",
-                      borderLeftColor:
-                        macro.percentage >= 100 ? macro.color : "transparent",
-                      top: -2,
-                      left: -2,
-                      transform: [{ rotate: "-90deg" }],
-                    }}
-                  />
-
-                  {/* Progress Dot */}
-                  {macro.percentage > 0 && (
-                    <View
-                      style={{
-                        position: "absolute",
-                        width: 4,
-                        height: 4,
-                        borderRadius: 2,
-                        backgroundColor: macro.color,
-                        top: -2,
-                        left: 16,
-                        shadowColor: macro.color,
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.8,
-                        shadowRadius: 2,
-                        elevation: 2,
-                        transform: [
-                          {
-                            translateX:
-                              Math.cos(
-                                (macro.percentage / 100) * 2 * Math.PI -
-                                  Math.PI / 2
-                              ) * 18,
-                          },
-                          {
-                            translateY:
-                              Math.sin(
-                                (macro.percentage / 100) * 2 * Math.PI -
-                                  Math.PI / 2
-                              ) * 18,
-                          },
-                        ],
-                      }}
-                    />
-                  )}
-                </View>
-
-                <Text
-                  style={{
-                    fontSize: 10,
-                    fontWeight: "600",
-                    color: colors.text.secondary,
-                    marginBottom: 1,
-                  }}
-                >
-                  {macro.label}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: "700",
-                    color: colors.text.primary,
-                  }}
-                >
-                  {macro.current}g
-                </Text>
-                <View
-                  style={{
-                    backgroundColor: macro.color + "15",
-                    paddingHorizontal: 6,
-                    paddingVertical: 1,
-                    borderRadius: 8,
-                    marginTop: 1,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      color: macro.color,
-                      fontWeight: "600",
-                    }}
-                  >
-                    {Math.round(macro.percentage)}%
-                  </Text>
-                </View>
-              </View>
-            ))}
+        <View className="items-center mr-4">
+          <View className="relative w-24 h-24 justify-center items-center mb-2">
+            <ProgressRing
+              progress={calorieProgress}
+              size={88}
+              strokeWidth={6}
+              backgroundColor={
+                isDark ? "#1E293B" : "#E2E8F0"
+              }
+              progressColor={isDark ? "#10B981" : "#059669"}
+              isDark={isDark}
+            />
+            <View className="absolute items-center">
+              <Text
+                className={`text-xl font-bold ${headerText}`}
+              >
+                {Math.round(todayStats.caloriesConsumed)}
+              </Text>
+              <Text
+                className={`text-xs font-medium ${subText}`}
+              >
+                of{" "}
+                {Math.round(todayStats.caloriesGoal / 1000)}
+                k
+              </Text>
+            </View>
           </View>
+          <View
+            className="px-3 py-1 rounded-full"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(16,185,129,0.2)"
+                : "rgba(5,150,105,0.2)",
+            }}
+          >
+            <Text
+              className={`text-${isDark ? "emerald-400" : "emerald-700"} font-bold text-xs`}
+            >
+              {Math.round(caloriesRemaining)} left
+            </Text>
+          </View>
+        </View>
 
-          {/* Simple Quick Stats Row */}
-          <View className="flex-row justify-around">
-            <View className="flex-row items-center">
-              <Ionicons name="walk" size={16} color={fitnessColors.steps} />
-              <Text
-                className="text-xs ml-1.5 font-medium"
-                style={{ color: colors.text.secondary }}
-              >
-                {(todayStats.stepsCount / 1000).toFixed(1)}k steps
-              </Text>
-            </View>
+        {/* Macro Circles */}
+        <View className="flex-1 flex-row justify-between">
+          {macros.map((macro) => (
+            <MacroCircle
+              key={macro.label}
+              {...macro}
+              isDark={isDark}
+            />
+          ))}
+        </View>
+      </View>
 
-            <View className="flex-row items-center">
-              <Ionicons name="water" size={16} color={fitnessColors.water} />
-              <Text
-                className="text-xs ml-1.5 font-medium"
-                style={{ color: colors.text.secondary }}
-              >
-                {(todayStats.waterConsumed / 1000).toFixed(1)}L
-              </Text>
-            </View>
+      {/* Compact Footer Stats */}
+      <View
+        className="flex-row justify-around py-3 px-4"
+        style={{
+          backgroundColor: isDark
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(0,0,0,0.03)",
+        }}
+      >
+        {/* Steps */}
+        <View className="flex-row items-center">
+          <View
+            className="w-7 h-7 rounded-lg justify-center items-center mr-2"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(16,185,129,0.2)"
+                : "rgba(5,150,105,0.2)",
+            }}
+          >
+            <Ionicons
+              name="walk"
+              size={14}
+              color={isDark ? "#10B981" : "#059669"}
+            />
+          </View>
+          <View>
+            <Text
+              className={`text-sm font-bold ${headerText}`}
+            >
+              {(todayStats.stepsCount / 1000).toFixed(1)}k
+            </Text>
+            <Text className={`text-xs ${subText}`}>
+              steps
+            </Text>
+          </View>
+        </View>
 
-            <View className="flex-row items-center">
-              <Ionicons name="flame" size={16} color={fitnessColors.calories} />
-              <Text
-                className="text-xs ml-1.5 font-medium"
-                style={{ color: colors.text.secondary }}
-              >
-                {todayStats.caloriesBurned} cal
-              </Text>
-            </View>
+        {/* Water */}
+        <View className="flex-row items-center">
+          <View
+            className="w-7 h-7 rounded-lg justify-center items-center mr-2"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(59,130,246,0.2)"
+                : "rgba(29,78,216,0.2)",
+            }}
+          >
+            <Ionicons
+              name="water"
+              size={14}
+              color={isDark ? "#3B82F6" : "#1D4ED8"}
+            />
+          </View>
+          <View>
+            <Text
+              className={`text-sm font-bold ${headerText}`}
+            >
+              {(todayStats.waterConsumed / 1000).toFixed(1)}
+              L
+            </Text>
+            <Text className={`text-xs ${subText}`}>
+              water
+            </Text>
+          </View>
+        </View>
+
+        {/* Burned */}
+        <View className="flex-row items-center">
+          <View
+            className="w-7 h-7 rounded-lg justify-center items-center mr-2"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(239,68,68,0.2)"
+                : "rgba(220,38,38,0.2)",
+            }}
+          >
+            <Ionicons
+              name="flame"
+              size={14}
+              color={isDark ? "#EF4444" : "#DC2626"}
+            />
+          </View>
+          <View>
+            <Text
+              className={`text-sm font-bold ${headerText}`}
+            >
+              {Math.round(todayStats.caloriesBurned)}
+            </Text>
+            <Text className={`text-xs ${subText}`}>
+              burned
+            </Text>
           </View>
         </View>
       </View>

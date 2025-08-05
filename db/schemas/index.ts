@@ -8,10 +8,7 @@ import { weightEntrySchema } from "./weightEntrySchema";
 
 // This is the master schema for our entire application.
 export const myAppSchema = appSchema({
-  // The version number is very important. Any time you change the schema
-  // (e.g., add a new column to users), you MUST increase this number.
-  // This tells WatermelonDB to update the database structure on the user's device.
-  version: 4,
+  version: 8,
 
   // This is the list of all tables in our database. For now, it's just one.
   tables: [

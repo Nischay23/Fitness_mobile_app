@@ -1,91 +1,80 @@
-import React, { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  useColorScheme,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { useOnboardingStore } from "../../store";
+import { GoalType } from "../../types";
+import { GoalCardProps } from "../../types";
 
-const GOALS = [
+// Define the options for the screen
+const GOAL_OPTIONS = [
   {
-    key: "lose_weight",
+    key: "lose" as GoalType,
     title: "Lose Weight",
-    description: "Reduce body weight through caloric deficit",
-    emoji: "📉",
+    icon: "trending-down" as keyof typeof Feather.glyphMap,
   },
   {
-    key: "maintain_weight",
+    key: "maintain" as GoalType,
     title: "Maintain Weight",
-    description: "Maintain current weight and build healthy habits",
-    emoji: "⚖️",
+    icon: "anchor" as keyof typeof Feather.glyphMap,
   },
   {
-    key: "gain_muscle",
-    title: "Gain Muscle",
-    description: "Build muscle mass through strength training",
-    emoji: "💪",
+    key: "gain" as GoalType,
+    title: "Gain Weight",
+    icon: "trending-up" as keyof typeof Feather.glyphMap,
   },
 ];
 
-interface GoalCardProps {
-  title: string;
-  description: string;
-  emoji: string;
-  isSelected: boolean;
-  onPress: () => void;
-}
-
+// --- Reusable Child Component: GoalCard ---
 const GoalCard = ({
   title,
-  description,
-  emoji,
+  icon,
   isSelected,
   onPress,
 }: GoalCardProps) => (
   <Pressable
     onPress={onPress}
-    className={`border-2 p-6 rounded-2xl mb-4 ${
-      isSelected ? "border-green-500 bg-green-500/10" : "border-gray-700"
-    }`}
+    className={`p-6 rounded-2xl border-2 mb-4 flex-row items-center
+      ${isSelected ? "bg-green-500/10 border-green-500" : "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-gray-700"}`}
   >
-    <View className="flex-row items-center mb-2">
-      <Text className="text-2xl mr-4">{emoji}</Text>
-      <Text
-        className={`text-lg font-semibold ${
-          isSelected ? "text-white" : "text-gray-300"
-        }`}
-      >
-        {title}
-      </Text>
+    <View
+      className={`w-12 h-12 rounded-full justify-center items-center mr-4 ${isSelected ? "bg-green-500" : "bg-gray-200 dark:bg-slate-700"}`}
+    >
+      <Feather
+        name={icon}
+        size={24}
+        color={isSelected ? "white" : "#6B7280"}
+      />
     </View>
-    <Text className="text-gray-400 text-sm ml-10">{description}</Text>
+    <Text
+      className={`text-xl font-bold ${isSelected ? "text-gray-800 dark:text-white" : "text-gray-800 dark:text-white"}`}
+    >
+      {title}
+    </Text>
   </Pressable>
 );
 
-interface GoalScreenProps {
-  onGoalSelect?: (goal: string) => void;
-}
-
-export const GoalScreen = ({ onGoalSelect }: GoalScreenProps) => {
-  const [selectedGoal, setSelectedGoal] = useState("lose_weight");
-
-  const handleGoalSelect = (goalKey: string) => {
-    setSelectedGoal(goalKey);
-    onGoalSelect?.(goalKey);
-  };
+// --- Main Screen Component ---
+export const GoalScreen = () => {
+  const { goalType, setData } = useOnboardingStore();
 
   return (
     <View className="flex-1 justify-center">
-      <Text className="text-white text-3xl font-bold text-center mb-2">
-        What's Your Goal?
-      </Text>
-      <Text className="text-gray-400 text-base text-center mb-8">
-        This will help us tailor your experience.
+      <Text className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-10">
+        What is your primary goal?
       </Text>
 
-      {GOALS.map((goal) => (
+      {GOAL_OPTIONS.map((goal) => (
         <GoalCard
           key={goal.key}
           title={goal.title}
-          description={goal.description}
-          emoji={goal.emoji}
-          isSelected={selectedGoal === goal.key}
-          onPress={() => handleGoalSelect(goal.key)}
+          icon={goal.icon}
+          isSelected={goalType === goal.key}
+          onPress={() => setData({ goalType: goal.key })}
         />
       ))}
     </View>

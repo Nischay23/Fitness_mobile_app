@@ -9,15 +9,25 @@ import React from "react";
 import { Feather } from "@expo/vector-icons";
 import { useProductsStore } from "../store/useProductsStore";
 import ProductCard from "./ProductCard";
+import { useTheme } from "@/modules/home/hooks/useTheme";
 
 const ProductsSection = () => {
-  const products = useProductsStore((state) => state.products);
+  const { colors } = useTheme();
+  const products = useProductsStore(
+    (state) => state.products
+  );
 
   if (!products.length) {
     return (
       <View className="mt-8 flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text className="mt-2 text-gray-500 dark:text-gray-400">
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+        />
+        <Text
+          className="mt-2"
+          style={{ color: colors.text.secondary }}
+        >
           Loading products...
         </Text>
       </View>
@@ -29,25 +39,28 @@ const ProductsSection = () => {
       {/* Header Section */}
       <View className="mb-6 flex-row items-center justify-between px-4">
         <View className="flex-1">
-          <Text className="text-2xl font-bold text-gray-900 dark:text-white">
+          <Text
+            className="text-2xl font-bold"
+            style={{ color: colors.text.primary }}
+          >
             Exclusive Store
           </Text>
-          <Text className="mt-1 text-base text-gray-600 dark:text-gray-400">
-            Premium gear & supplements for your fitness journey
+          <Text
+            className="mt-1 text-base"
+            style={{ color: colors.text.secondary }}
+          >
+            Premium gear & supplements for your fitness
+            journey
           </Text>
         </View>
-        <Pressable className="flex-row items-center rounded-full bg-green-100 px-4 py-2 dark:bg-green-900">
-          <Text className="mr-2 text-sm font-semibold text-green-700 dark:text-green-300">
-            View All
-          </Text>
-          <Feather name="arrow-right" size={16} color="#059669" />
-        </Pressable>
       </View>
 
       {/* Products List */}
       <FlatList
         data={products}
-        renderItem={({ item }) => <ProductCard product={item} />}
+        renderItem={({ item }) => (
+          <ProductCard product={item} />
+        )}
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -55,13 +68,22 @@ const ProductsSection = () => {
           paddingHorizontal: 16,
           paddingVertical: 8,
         }}
-        ItemSeparatorComponent={() => <View className="w-2" />}
+        ItemSeparatorComponent={() => (
+          <View className="w-2" />
+        )}
       />
 
       {/* Bottom Info */}
-      <View className="mt-4 flex-row items-center justify-center px-4">
-        <Feather name="shield" size={16} color="#10B981" />
-        <Text className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+      <View className="mt-6 mb-4 flex-row items-center justify-center px-4">
+        <Feather
+          name="shield"
+          size={16}
+          color={colors.primary}
+        />
+        <Text
+          className="ml-2 text-sm"
+          style={{ color: colors.text.secondary }}
+        >
           All products come with our satisfaction guarantee
         </Text>
       </View>

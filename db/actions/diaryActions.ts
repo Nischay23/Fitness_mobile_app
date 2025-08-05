@@ -5,7 +5,8 @@ import { Food } from "../models/Food";
 import { User } from "../models/User";
 import { DiaryEntry } from "../models/DiaryEntry";
 
-const foodsCollection = database.collections.get<Food>("foods");
+const foodsCollection =
+  database.collections.get<Food>("foods");
 const diaryEntriesCollection =
   database.collections.get<DiaryEntry>("diary_entries");
 
@@ -14,8 +15,14 @@ const diaryEntriesCollection =
  * @param query The search string from the user.
  * @returns A promise that resolves to an array of Food models.
  */
-export const searchFoods = async (query: string): Promise<Food[]> => {
-  if (!query) return [];
+export const searchFoods = async (
+  query: string
+): Promise<Food[]> => {
+  // If no query provided, return all foods (for suggestions)
+  if (!query || query.trim() === "") {
+    const allFoods = await foodsCollection.query().fetch();
+    return allFoods;
+  }
 
   const searchWords = query
     .toLowerCase()
@@ -25,7 +32,11 @@ export const searchFoods = async (query: string): Promise<Food[]> => {
   // This creates a query that looks for foods where the name contains EACH search word.
   const foodResults = await foodsCollection
     .query(
-      Q.and(...searchWords.map((word) => Q.where("name", Q.like(`%${word}%`))))
+      Q.and(
+        ...searchWords.map((word) =>
+          Q.where("name", Q.like(`%${word}%`))
+        )
+      )
     )
     .fetch();
 
@@ -42,7 +53,8 @@ export const logFoodToDiary = async (options: {
   mealType: "breakfast" | "lunch" | "dinner" | "snacks";
   servings: number;
 }) => {
-  const { userId, food, date, mealType, servings } = options;
+  const { userId, food, date, mealType, servings } =
+    options;
 
   console.log(`🔄 Starting to log food:`, {
     userId,
@@ -56,20 +68,22 @@ export const logFoodToDiary = async (options: {
 
   try {
     await database.write(async () => {
-      const newEntry = await diaryEntriesCollection.create((entry) => {
-        entry.userId = userId; // Set the user ID for this entry
-        entry.foodId = food.id; // Link to the food item
-        entry.date = date;
-        entry.mealType = mealType;
-        entry.servings = servings;
+      const newEntry = await diaryEntriesCollection.create(
+        (entry) => {
+          entry.userId = userId; // Set the user ID for this entry
+          entry.foodId = food.id; // Link to the food item
+          entry.date = date;
+          entry.mealType = mealType;
+          entry.servings = servings;
 
-        // Denormalize the nutritional data for performance
-        entry.calories = food.calories * servings;
-        entry.protein_g = food.protein_g * servings;
-        entry.carbs_g = food.carbs_g * servings;
-        entry.fat_g = food.fat_g * servings;
-        entry.fiber_g = food.fiber_g * servings;
-      });
+          // Denormalize the nutritional data for performance
+          entry.calories = food.calories * servings;
+          entry.protein_g = food.protein_g * servings;
+          entry.carbs_g = food.carbs_g * servings;
+          entry.fat_g = food.fat_g * servings;
+          entry.fiber_g = food.fiber_g * servings;
+        }
+      );
 
       console.log(`💾 Created diary entry:`, {
         id: newEntry.id,
@@ -87,7 +101,10 @@ export const logFoodToDiary = async (options: {
 
     // Verify the entry was created by querying for it
     const verifyEntries = await diaryEntriesCollection
-      .query(Q.where("date", date), Q.where("user_id", userId))
+      .query(
+        Q.where("date", date),
+        Q.where("user_id", userId)
+      )
       .fetch();
 
     console.log(
@@ -106,6 +123,10 @@ export const logFoodToDiary = async (options: {
  * @param date The date string 'YYYY-MM-DD'.
  * @returns An observable that emits an array of DiaryEntry models.
  */
-export const observeDiaryEntriesForDate = (date: string) => {
-  return diaryEntriesCollection.query(Q.where("date", date)).observe();
+export const observeDiaryEntriesForDate = (
+  date: string
+) => {
+  return diaryEntriesCollection
+    .query(Q.where("date", date))
+    .observe();
 };

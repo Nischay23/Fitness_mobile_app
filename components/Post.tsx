@@ -1,177 +1,314 @@
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  Alert,
+  StyleSheet,
+  useColorScheme,
+} from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQuery } from "convex/react";
-import { Image } from "expo-image";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { View, Text, TouchableOpacity, Image as RNImage } from "react-native";
-import CommentsModal from "./CommentsModal";
-import { formatDistanceToNow } from "date-fns";
-import { useUser } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
+import { COLORS } from "@/constants/theme";
 
-type PostProps = {
-  post: {
-    _id: Id<"posts">;
-    imageUrl: string;
-    caption?: string;
-    likes: number;
-    comments: number;
-    _creationTime: number;
-    isLiked: boolean;
-    isBookmarked: boolean;
-    author: {
-      _id: string;
-      username: string;
-      image: string;
-    };
-  };
+// Define your types in a central file like `types/index.ts`
+type AuthorProfile = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
 };
+type PostWithAuthor = {
+  id: string;
+  caption: string | null;
+  image_url: string;
+  like_count: number;
+  created_at: string;
+  author: AuthorProfile | null;
+  is_liked: boolean;
+};
+type PostProps = { post: PostWithAuthor };
 
-export default function Post({ post }: PostProps) {
-  const [isLiked, setIsLiked] = useState(post.isLiked);
-  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
+export default function Post({
+  post: initialPost,
+}: PostProps) {
+  const router = useRouter();
+  const colorScheme = useColorScheme() ?? "light";
+  const colors = COLORS[colorScheme];
 
-  const [showComments, setShowComments] = useState(false);
+  // Animation values
+  const heartScale = useSharedValue(1);
+  const heartOpacity = useSharedValue(1);
 
-  const { user } = useUser();
-
-  const currentUser = useQuery(
-    api.users.getUserByClerkId,
-    user ? { clerkId: user.id } : "skip"
+  // This state is now derived from props and will be the single source of truth for the UI
+  const [isLiked, setIsLiked] = useState(
+    initialPost.is_liked
   );
+  const [likeCount, setLikeCount] = useState(
+    initialPost.like_count
+  );
+  const [isLiking, setIsLiking] = useState(false);
 
-  const toggleLike = useMutation(api.posts.toggleLike);
-  const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
-  const deletePost = useMutation(api.posts.deletePost);
+  // This is the key: This effect ensures that if the parent data changes (e.g., after a refresh),
+  // the component's state updates to match the new reality from the database.
+  useEffect(() => {
+    setIsLiked(initialPost.is_liked);
+    setLikeCount(initialPost.like_count);
+  }, [initialPost.is_liked, initialPost.like_count]);
 
-  const handleLike = async () => {
+  const handleToggleLike = async () => {
+    if (isLiking) return;
+    setIsLiking(true);
+
+    // Optimistic update for a snappy UI
+    const previousLikeState = isLiked;
+    const previousLikeCount = likeCount;
+
+    setIsLiked(!previousLikeState);
+    setLikeCount(
+      previousLikeState
+        ? previousLikeCount - 1
+        : previousLikeCount + 1
+    );
+
+    // Heart animation when liking
+    if (!previousLikeState) {
+      heartScale.value = withSequence(
+        withSpring(1.3, { damping: 10, stiffness: 200 }),
+        withSpring(1, { damping: 10, stiffness: 200 })
+      );
+    }
+
     try {
-      const newIsLiked = await toggleLike({ postId: post._id });
-      setIsLiked(newIsLiked);
-    } catch (error) {
+      // The backend handles the "one like per user" rule and returns the true state
+      const { data, error } =
+        await supabase.functions.invoke("toggle-like", {
+          body: { post_id: initialPost.id },
+        });
+
+      if (error) {
+        throw error; // Let the catch block handle UI reversal
+      }
+    } catch (error: any) {
       console.error("Error toggling like:", error);
+      // If the server call fails for any reason, revert the UI to its previous state.
+      setIsLiked(previousLikeState);
+      setLikeCount(previousLikeCount);
+      Alert.alert("Error", "Could not update like status.");
+    } finally {
+      setIsLiking(false);
     }
   };
 
-  const handleBookmark = async () => {
-    const newIsBookmarked = await toggleBookmark({ postId: post._id });
-    setIsBookmarked(newIsBookmarked);
+  const handleCommentPress = () => {
+    router.push({
+      pathname: "/(modals)/comments",
+      params: {
+        post_id: initialPost.id,
+        post_author_id: initialPost.author?.id || "",
+      },
+    });
   };
 
-  const handleDelete = async () => {
-    try {
-      await deletePost({ postId: post._id });
-    } catch (error) {
-      console.error("Error deleting post:", error);
+  const getAvatarUrl = () => {
+    if (initialPost.author?.avatar_url) {
+      return initialPost.author.avatar_url;
     }
+    const firstLetter =
+      initialPost.author?.username?.charAt(0) || "U";
+    return `https://ui-avatars.com/api/?name=${firstLetter}&background=4ADE80&color=fff&size=128`;
   };
+
+  // Animated style for heart icon
+  const animatedHeartStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: heartScale.value }],
+      opacity: heartOpacity.value,
+    };
+  });
 
   return (
-    <View className="mb-4">
-      {/* POST HEADER */}
-      <View className="flex-row items-center justify-between p-3">
-        <Link
-          href={
-            currentUser?._id === post.author._id
-              ? "/(tabs)/profile"
-              : `/user/${post.author._id}`
-          }
-          asChild
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.surface },
+      ]}
+    >
+      {/* Header */}
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <Image
+          source={{ uri: getAvatarUrl() }}
+          style={styles.avatar}
+        />
+        <Text
+          style={[
+            styles.username,
+            { color: colors.text.primary },
+          ]}
         >
-          <TouchableOpacity className="flex-row items-center">
-            <RNImage
-              source={{ uri: post.author.image }}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                marginRight: 8,
-              }}
-              resizeMode="cover"
-            />
-            <Text className="text-sm font-semibold text-white">
-              {post.author.username}
-            </Text>
-          </TouchableOpacity>
-        </Link>
-
-        {/* if i'm the owner of the post, show the delete button  */}
-        {post.author._id === currentUser?._id ? (
-          <TouchableOpacity onPress={handleDelete}>
-            <Ionicons name="trash-outline" size={20} color="#4ADE80" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity>
-            <Ionicons name="ellipsis-horizontal" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
+          {initialPost.author?.username || "Unknown"}
+        </Text>
       </View>
 
-      {/* IMAGE */}
-      <RNImage
-        source={{ uri: post.imageUrl }}
-        style={{ width: "100%", aspectRatio: 1 }}
-        resizeMode="cover"
+      {/* Image */}
+      <Image
+        source={{ uri: initialPost.image_url }}
+        style={styles.postImage}
       />
 
-      {/* POST ACTIONS */}
-      <View className="flex-row justify-between items-center px-3 py-3">
-        <View className="flex-row items-center gap-4">
-          <TouchableOpacity onPress={handleLike}>
-            <Ionicons
-              name={isLiked ? "heart" : "heart-outline"}
-              size={24}
-              color={isLiked ? "#4ADE80" : "#FFFFFF"}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowComments(true)}>
-            <Ionicons name="chatbubble-outline" size={22} color="#FFFFFF" />
-          </TouchableOpacity>
+      {/* Actions */}
+      <View
+        style={[
+          styles.actionsContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <View style={styles.likeContainer}>
+          <Pressable
+            onPress={handleToggleLike}
+            disabled={isLiking}
+            style={styles.actionButton}
+          >
+            <Animated.View style={animatedHeartStyle}>
+              <Ionicons
+                name={isLiked ? "heart" : "heart-outline"}
+                size={28}
+                color={
+                  isLiked ? "#FF3B30" : colors.text.primary
+                }
+              />
+            </Animated.View>
+          </Pressable>
+          <Text
+            style={[
+              styles.likesCount,
+              { color: colors.text.primary },
+            ]}
+          >
+            {likeCount.toLocaleString()}
+          </Text>
         </View>
-        <TouchableOpacity onPress={handleBookmark}>
+        <Pressable
+          onPress={handleCommentPress}
+          style={styles.actionButton}
+        >
           <Ionicons
-            name={isBookmarked ? "bookmark" : "bookmark-outline"}
-            size={22}
-            color="#FFFFFF"
+            name="chatbubble-outline"
+            size={26}
+            color={colors.text.primary}
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      {/* POST INFO */}
-      <View className="px-3">
-        <Text className="text-sm font-semibold text-white mb-1.5">
-          {post.likes > 0
-            ? `${post.likes.toLocaleString()} likes`
-            : "Be the first to like"}
-        </Text>
-        {post.caption && (
-          <View className="flex-row flex-wrap mb-1.5">
-            <Text className="text-sm font-semibold text-white mr-1.5">
-              {post.author.username}
-            </Text>
-            <Text className="text-sm text-white flex-1">{post.caption}</Text>
-          </View>
+      {/* Footer */}
+      <View
+        style={[
+          styles.footer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        {initialPost.caption && (
+          <Text
+            style={[
+              styles.captionText,
+              { color: colors.text.primary },
+            ]}
+            numberOfLines={2}
+          >
+            <Text
+              style={[
+                styles.usernameFooter,
+                { color: colors.text.primary },
+              ]}
+            >
+              {initialPost.author?.username || "Unknown"}
+            </Text>{" "}
+            {initialPost.caption}
+          </Text>
         )}
-
-        {post.comments > 0 && (
-          <TouchableOpacity onPress={() => setShowComments(true)}>
-            <Text className="text-sm text-grey mb-1">
-              View all {post.comments} comments
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        <Text className="text-xs text-grey mb-2">
-          {formatDistanceToNow(post._creationTime, { addSuffix: true })}
-        </Text>
       </View>
-
-      <CommentsModal
-        postId={post._id}
-        visible={showComments}
-        onClose={() => setShowComments(false)}
-      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 4,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#333",
+  },
+  username: {
+    fontWeight: "600",
+    marginLeft: 12,
+    fontSize: 16,
+  },
+  postImage: {
+    width: "100%",
+    aspectRatio: 1,
+    backgroundColor: "#222",
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  likeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
+  actionButton: {
+    padding: 4,
+  },
+  likesCount: {
+    fontWeight: "600",
+    fontSize: 15,
+    marginLeft: 8,
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  captionText: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  usernameFooter: {
+    fontWeight: "600",
+  },
+});

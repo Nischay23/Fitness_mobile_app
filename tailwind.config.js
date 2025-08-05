@@ -28,7 +28,9 @@ module.exports = {
         sleep: "#6366F1",
       },
       fontFamily: {
-        "jetbrains-mono": ["JetBrainsMono-Medium"],
+        sans: ["Inter-Regular", "sans-serif"],
+        semibold: ["Inter-SemiBold", "sans-serif"],
+        bold: ["Inter-Bold", "sans-serif"],
       },
     },
   },

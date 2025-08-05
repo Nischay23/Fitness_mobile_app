@@ -1,5 +1,3 @@
-// src/modules/diary/components/DiaryList.tsx
-
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,8 +8,10 @@ import { database } from "@/db";
 import { DiaryEntry } from "@/db/models/DiaryEntry";
 import { Food } from "@/db/models/Food";
 import { useAppStore } from "@/stores/appStore";
-import { COLORS } from "@/constants/theme";
-import MealSection, { DisplayFoodItem } from "./MealSection";
+import { useTheme } from "@/modules/home/hooks/useTheme";
+import MealSection, {
+  DisplayFoodItem,
+} from "./MealSection";
 import { MealType } from "@/modules/nutrition/types";
 
 // Define the props our component will receive from its parent
@@ -29,7 +29,10 @@ const BaseDiaryList = ({
   entries,
   dateString,
 }: InputProps & ObservableProps) => {
-  const [foodsMap, setFoodsMap] = useState<Record<string, Food>>({});
+  const [foodsMap, setFoodsMap] = useState<
+    Record<string, Food>
+  >({});
+  const { colors } = useTheme();
   const router = useRouter();
 
   // Load food data when entries change
@@ -37,7 +40,9 @@ const BaseDiaryList = ({
     const loadFoods = async () => {
       if (entries.length === 0) return;
 
-      const foodIds = [...new Set(entries.map((e) => e.foodId))];
+      const foodIds = [
+        ...new Set(entries.map((e) => e.foodId)),
+      ];
       console.log(`🔍 Loading foods for IDs:`, foodIds);
 
       try {
@@ -66,17 +71,20 @@ const BaseDiaryList = ({
 
   // Debug logging
   useEffect(() => {
-    console.log(`📊 DiaryList received entries for ${dateString}:`, {
-      count: entries.length,
-      entries: entries.map((e) => ({
-        id: e.id,
-        mealType: e.mealType,
-        calories: e.calories,
-        foodId: e.foodId,
-        foodName: foodsMap[e.foodId]?.name,
-        servings: e.servings,
-      })),
-    });
+    console.log(
+      `📊 DiaryList received entries for ${dateString}:`,
+      {
+        count: entries.length,
+        entries: entries.map((e) => ({
+          id: e.id,
+          mealType: e.mealType,
+          calories: e.calories,
+          foodId: e.foodId,
+          foodName: foodsMap[e.foodId]?.name,
+          servings: e.servings,
+        })),
+      }
+    );
   }, [entries, dateString, foodsMap]);
 
   // Process the raw WDB models into simple data for the UI
@@ -115,12 +123,15 @@ const BaseDiaryList = ({
       })),
   };
 
-  console.log(`🍽️ Processed meals data for ${dateString}:`, {
-    breakfast: mealsData.breakfast.length,
-    lunch: mealsData.lunch.length,
-    dinner: mealsData.dinner.length,
-    snacks: mealsData.snacks.length,
-  });
+  console.log(
+    `🍽️ Processed meals data for ${dateString}:`,
+    {
+      breakfast: mealsData.breakfast.length,
+      lunch: mealsData.lunch.length,
+      dinner: mealsData.dinner.length,
+      snacks: mealsData.snacks.length,
+    }
+  );
 
   // Placeholder functions for button actions
   const handleNutritionPress = () => {
@@ -139,47 +150,80 @@ const BaseDiaryList = ({
   };
 
   return (
-    <View style={{ paddingTop: 24, paddingHorizontal: 0 }}>
-      <MealSection
-        mealName="breakfast"
-        items={mealsData.breakfast}
-        dateString={dateString}
-      />
-      <MealSection
-        mealName="lunch"
-        items={mealsData.lunch}
-        dateString={dateString}
-      />
-      <MealSection
-        mealName="dinner"
-        items={mealsData.dinner}
-        dateString={dateString}
-      />
-      <MealSection
-        mealName="snacks"
-        items={mealsData.snacks}
-        dateString={dateString}
-      />
+    <View style={{ paddingTop: 12 }}>
+      {/* Meal Sections with improved spacing */}
+      <View style={{ gap: 16 }}>
+        <MealSection
+          mealName="breakfast"
+          items={mealsData.breakfast}
+          dateString={dateString}
+        />
+        <MealSection
+          mealName="lunch"
+          items={mealsData.lunch}
+          dateString={dateString}
+        />
+        <MealSection
+          mealName="dinner"
+          items={mealsData.dinner}
+          dateString={dateString}
+        />
+        <MealSection
+          mealName="snacks"
+          items={mealsData.snacks}
+          dateString={dateString}
+        />
+      </View>
 
-      {/* Action Buttons Section */}
-      <View style={{ paddingHorizontal: 16, paddingBottom: 20, gap: 12 }}>
-        {/* Top Row - Nutrition and Notes */}
+      {/* Enhanced Action Buttons Section */}
+      <View
+        style={{
+          paddingHorizontal: 0,
+          paddingTop: 24,
+          paddingBottom: 16,
+          gap: 12,
+        }}
+      >
+        {/* Quick Actions Grid */}
         <View style={{ flexDirection: "row", gap: 12 }}>
           <TouchableOpacity
             onPress={handleNutritionPress}
             style={{
               flex: 1,
-              backgroundColor: "#2A2D3A",
-              borderRadius: 12,
+              backgroundColor: colors.surface,
+              borderRadius: 16,
               padding: 16,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              gap: 8,
+              gap: 10,
+              borderWidth: 1,
+              borderColor: colors.border + "40",
             }}
           >
-            <Ionicons name="pie-chart" size={20} color="#3B82F6" />
-            <Text style={{ color: "white", fontSize: 16, fontWeight: "500" }}>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: "#3B82F6" + "20",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name="pie-chart"
+                size={18}
+                color="#3B82F6"
+              />
+            </View>
+            <Text
+              style={{
+                color: colors.text.primary,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
               Nutrition
             </Text>
           </TouchableOpacity>
@@ -188,41 +232,89 @@ const BaseDiaryList = ({
             onPress={handleNotesPress}
             style={{
               flex: 1,
-              backgroundColor: "#2A2D3A",
-              borderRadius: 12,
+              backgroundColor: colors.surface,
+              borderRadius: 16,
               padding: 16,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              gap: 8,
+              gap: 10,
+              borderWidth: 1,
+              borderColor: colors.border + "40",
             }}
           >
-            <Ionicons
-              name="document-text"
-              size={20}
-              color={COLORS.light.primary}
-            />
-            <Text style={{ color: "white", fontSize: 16, fontWeight: "500" }}>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: "#F59E0B" + "20",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name="document-text"
+                size={18}
+                color="#F59E0B"
+              />
+            </View>
+            <Text
+              style={{
+                color: colors.text.primary,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
               Notes
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Bottom Row - Complete Diary */}
+        {/* Primary Action Button */}
         <TouchableOpacity
           onPress={handleCompleteDiaryPress}
           style={{
-            backgroundColor: "#3B82F6",
-            borderRadius: 12,
+            backgroundColor: "#059669",
+            borderRadius: 16,
             padding: 18,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            gap: 8,
+            gap: 12,
+            shadowColor: "#059669",
+            shadowOffset: {
+              width: 0,
+              height: 4,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 8,
           }}
         >
-          <Ionicons name="checkmark-circle" size={20} color="white" />
-          <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: "rgba(255,255,255,0.25)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons
+              name="checkmark"
+              size={16}
+              color="white"
+            />
+          </View>
+          <Text
+            style={{
+              color: "white",
+              fontSize: 18,
+              fontWeight: "700",
+            }}
+          >
             Complete Diary
           </Text>
         </TouchableOpacity>

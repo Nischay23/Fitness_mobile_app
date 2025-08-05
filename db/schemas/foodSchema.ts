@@ -13,6 +13,8 @@ export const foodSchema = tableSchema({
     { name: "fiber_g", type: "number" },
     // We can add more nutrients like sugar, etc., later
     { name: "serving_size", type: "number" },
-    { name: "serving_unit", type: "string" }, // e.g., 'g', 'ml', 'slice'
+    { name: "serving_unit", type: "string" },
+    { name: "created_at", type: "number" },
+    { name: "updated_at", type: "number" },
   ],
 });

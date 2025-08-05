@@ -6,19 +6,36 @@ import {
   readonly,
   text,
   field,
+  action,
 } from "@nozbe/watermelondb/decorators";
-import { database } from "..";
 import { WeightEntry } from "./WeightEntry";
 
 // The 'User' class extends WatermelonDB's Model.
 // This gives it all the database powers like .update(), .destroy(), etc.
 
-type ActivityLevel =
+export type ActivityLevel =
   | "sedentary"
   | "lightly_active"
   | "moderately_active"
   | "very_active";
-type GoalType = "lose" | "maintain" | "gain";
+export type GoalType = "lose" | "maintain" | "gain";
+export type Gender = "male" | "female" | "other";
+
+// This is our new single source of truth for the user profile shape
+export interface UserProfileData {
+  server_id: string;
+  email?: string;
+  name: string;
+  avatar_url?: string;
+  gender: Gender;
+  dateOfBirth: string;
+  heightCm: number;
+  currentWeightKg: number;
+  goalType: GoalType;
+  activityLevel: ActivityLevel;
+  targetWeightKg: number;
+  goalRateKgPerWeek?: number;
+}
 export class User extends Model {
   // This static property tells WatermelonDB that this model is connected
   // to the 'users' table in the schema. This is how they link up.
@@ -26,11 +43,15 @@ export class User extends Model {
 
   // --- Field Decorators ---
   // The @text decorator links a string property to a database column.
+  @text("server_id") serverId!: string;
+  @text("email") email!: string;
+  @text("avatar_url") avatarUrl?: string;
   @text("name") name!: string;
   @text("date_of_birth") dateOfBirth!: string;
   @text("gender") gender!: string;
   @field("height_cm") heightCm!: number;
   @field("current_weight_kg") currentWeightKg!: number;
+  @field("goal_weight_kg") goalWeightKg!: number;
 
   @text("activity_level") activityLevel!: ActivityLevel;
   @text("goal_type") goalType!: GoalType;
@@ -71,80 +92,5 @@ export class User extends Model {
       age--;
     }
     return age;
-  }
-
-  calculateBMR(): number {
-    if (
-      !this.age ||
-      !this.heightCm ||
-      !this.currentWeightKg
-    )
-      return 0;
-
-    // Mifflin-St Jeor Equation
-    const bmr =
-      this.gender === "male"
-        ? 10 * this.currentWeightKg +
-          6.25 * this.heightCm -
-          5 * this.age +
-          5
-        : 10 * this.currentWeightKg +
-          6.25 * this.heightCm -
-          5 * this.age -
-          161;
-
-    return Math.round(bmr);
-  }
-
-  calculateTDEE(): number {
-    const bmr = this.calculateBMR();
-    const multipliers = {
-      sedentary: 1.2,
-      lightly_active: 1.375,
-      moderately_active: 1.55,
-      very_active: 1.725,
-    };
-    return Math.round(
-      bmr * multipliers[this.activityLevel]
-    );
-  }
-
-  async setupInitialGoals(): Promise<void> {
-    const tdee = this.calculateTDEE();
-    let dailyCalorieGoal = tdee;
-
-    // Adjust calories based on goal
-    if (this.goalType === "lose") {
-      dailyCalorieGoal = tdee - 500; // 500 calorie deficit
-    } else if (this.goalType === "gain") {
-      dailyCalorieGoal = tdee + 500; // 500 calorie surplus
-    }
-
-    // Calculate macros (simple 30% protein, 40% carbs, 30% fat)
-    const proteinGoal = Math.round(
-      (dailyCalorieGoal * 0.3) / 4
-    );
-    const carbsGoal = Math.round(
-      (dailyCalorieGoal * 0.4) / 4
-    );
-    const fatGoal = Math.round(
-      (dailyCalorieGoal * 0.3) / 9
-    );
-
-    // Set fiber goal based on dietary guidelines (25g for women, 38g for men)
-    const fiberGoal = this.gender === "male" ? 38 : 25;
-
-    await database.write(async () => {
-      await this.update(() => {
-        this.tdee = tdee;
-        this.dailyCalorieGoal = dailyCalorieGoal;
-        this.proteinGoal_g = proteinGoal;
-        this.carbsGoal_g = carbsGoal;
-        this.fatGoal_g = fatGoal;
-        this.fiberGoal_g = fiberGoal;
-        this.goalRateKgPerWeek =
-          this.goalType === "maintain" ? 0 : 0.5;
-      });
-    });
   }
 }

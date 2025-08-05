@@ -72,12 +72,17 @@ export const PlansBanner: React.FC = () => {
   const { todayStats } = useHomeStore();
   const scrollViewRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const autoScrollInterval = useRef<NodeJS.Timeout | null>(null);
+  const [isUserScrolling, setIsUserScrolling] =
+    useState(false);
+  const autoScrollInterval = useRef<NodeJS.Timeout | null>(
+    null
+  );
 
   const handleScroll = (event: any) => {
     const slideSize = cardWidth + cardMargin;
-    const index = Math.round(event.nativeEvent.contentOffset.x / slideSize);
+    const index = Math.round(
+      event.nativeEvent.contentOffset.x / slideSize
+    );
     setActiveIndex(index);
   };
 
@@ -96,7 +101,8 @@ export const PlansBanner: React.FC = () => {
     autoScrollInterval.current = setInterval(() => {
       if (!isUserScrolling) {
         setActiveIndex((prevIndex) => {
-          const nextIndex = (prevIndex + 1) % planCards.length;
+          const nextIndex =
+            (prevIndex + 1) % planCards.length;
           scrollToIndex(nextIndex);
           return nextIndex;
         });
@@ -140,12 +146,16 @@ export const PlansBanner: React.FC = () => {
     }
   }, [isUserScrolling]);
 
-  const renderProgressRing = (progress: number, size: number = 60) => {
+  const renderProgressRing = (
+    progress: number,
+    size: number = 60
+  ) => {
     const strokeWidth = 4;
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const strokeDasharray = circumference;
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
+    const strokeDashoffset =
+      circumference - (progress / 100) * circumference;
 
     return (
       <View style={{ width: size, height: size }}>
@@ -167,7 +177,9 @@ export const PlansBanner: React.FC = () => {
             backgroundColor: colors.primary,
             top: strokeWidth / 2,
             left: strokeWidth / 2,
-            transform: [{ rotate: `${(progress / 100) * 360}deg` }],
+            transform: [
+              { rotate: `${(progress / 100) * 360}deg` },
+            ],
           }}
         />
         <View
@@ -203,18 +215,23 @@ export const PlansBanner: React.FC = () => {
       style={{
         width: cardWidth,
         marginHorizontal: cardMargin / 2,
-        backgroundColor: colors.surface,
-        borderRadius: 16,
+        backgroundColor: isDark
+          ? "rgba(17, 24, 39, 0.95)"
+          : colors.surface, // Match HeroSection dark bg
+        borderRadius: 24,
         padding: 20,
-        shadowColor: isDark ? "#000" : "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDark ? 0.3 : 0.1,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.4 : 0.1,
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: isDark
+          ? "rgba(255,255,255,0.1)"
+          : colors.border,
         minHeight: 180,
         justifyContent: "space-between",
+        backdropFilter: "blur(12px)",
       }}
     >
       {/* Card Content */}
@@ -225,7 +242,7 @@ export const PlansBanner: React.FC = () => {
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            marginBottom: 16,
+            marginBottom: 12,
           }}
         >
           <View style={{ flex: 1 }}>
@@ -295,7 +312,9 @@ export const PlansBanner: React.FC = () => {
                   color: colors.text.secondary,
                 }}
               >
-                {Math.round(((card.progress || 0) / 100) * 7)}
+                {Math.round(
+                  ((card.progress || 0) / 100) * 7
+                )}
                 /7 days
               </Text>
             </View>
@@ -348,7 +367,10 @@ export const PlansBanner: React.FC = () => {
                 color: "#8B5CF6",
               },
             ].map((macro, index) => (
-              <View key={index} style={{ alignItems: "center" }}>
+              <View
+                key={index}
+                style={{ alignItems: "center" }}
+              >
                 <View
                   style={{
                     width: 30,
@@ -367,7 +389,10 @@ export const PlansBanner: React.FC = () => {
                       color: macro.color,
                     }}
                   >
-                    {Math.round((macro.value / macro.goal) * 100)}%
+                    {Math.round(
+                      (macro.value / macro.goal) * 100
+                    )}
+                    %
                   </Text>
                 </View>
                 <Text
@@ -395,7 +420,10 @@ export const PlansBanner: React.FC = () => {
       {/* Action Button */}
       <TouchableOpacity
         style={{
-          backgroundColor: card.type === "premium" ? "#FFD93D" : colors.primary,
+          backgroundColor:
+            card.type === "premium"
+              ? "#FFD93D"
+              : colors.primary,
           paddingVertical: 12,
           paddingHorizontal: 24,
           borderRadius: 25,
@@ -405,7 +433,10 @@ export const PlansBanner: React.FC = () => {
       >
         <Text
           style={{
-            color: card.type === "premium" ? "#000" : colors.text.inverse,
+            color:
+              card.type === "premium"
+                ? "#000"
+                : colors.text.inverse,
             fontWeight: "600",
             fontSize: 14,
           }}
@@ -417,7 +448,11 @@ export const PlansBanner: React.FC = () => {
   );
 
   return (
-    <View style={{ marginVertical: 16 }}>
+    <View
+      style={{
+        marginVertical: 5,
+      }}
+    >
       {/* Header */}
       <View
         style={{
@@ -425,24 +460,40 @@ export const PlansBanner: React.FC = () => {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 16,
-          marginBottom: 12,
+          marginBottom: 5,
+          backgroundColor: isDark
+            ? "rgba(0,0,0,0.2)"
+            : "rgba(255,255,255,0.5)",
+          backdropFilter: "blur(8px)",
+          padding: 8,
+          borderRadius: 16,
+          marginHorizontal: 8,
         }}
       >
         <Text
           style={{
             fontSize: 18,
-            fontWeight: "bold",
-            color: colors.text.primary,
+            fontWeight: "700",
+            color: isDark ? "#FFFFFF" : colors.text.primary,
           }}
         >
           Your Journey
         </Text>
-        <TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            backgroundColor: isDark
+              ? "rgba(255,255,255,0.1)"
+              : "rgba(0,0,0,0.05)",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+          }}
+        >
           <Text
             style={{
               fontSize: 14,
-              color: colors.primary,
-              fontWeight: "500",
+              color: isDark ? "#CBD5E1" : colors.primary,
+              fontWeight: "600",
             }}
           >
             View All
@@ -486,7 +537,9 @@ export const PlansBanner: React.FC = () => {
               height: 8,
               borderRadius: 4,
               backgroundColor:
-                index === activeIndex ? colors.primary : colors.border,
+                index === activeIndex
+                  ? colors.primary
+                  : colors.border,
               marginHorizontal: 4,
             }}
           />

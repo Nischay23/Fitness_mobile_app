@@ -1,6 +1,5 @@
 // Components
 export { QuickLogModal } from "./components/QuickLogModal";
-export { FoodSearchScreen } from "./components/FoodSearchScreen";
 export { FoodItemCard } from "./components/FoodItemCard";
 export { NutritionTabs } from "./components/NutritionTabs";
 export { CaloriesTab } from "./components/CaloriesTab";

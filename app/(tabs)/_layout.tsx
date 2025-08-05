@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs } from "expo-router";
 import {
   MaterialCommunityIcons,
@@ -11,15 +11,42 @@ import {
 } from "react-native";
 import { COLORS } from "@/constants/theme";
 import { QuickLogModal } from "@/modules/nutrition";
+import { useAppStore } from "@/stores/appStore";
+import { useHomeStore } from "@/modules/home/store/homeStore";
+import { database } from "@/db/index";
+import { DiaryEntry } from "@/db/models/DiaryEntry";
+import { Q } from "@nozbe/watermelondb";
+import { format } from "date-fns";
 
 export default function TabLayout(): React.ReactElement {
   const [showQuickLogModal, setShowQuickLogModal] =
     useState(false);
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
+  const { currentUser } = useAppStore();
+  const { updateTodayStats } = useHomeStore();
+
+  // Global observer for diary entries to keep home store updated
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const todayString = format(new Date(), "yyyy-MM-dd");
+    const subscription = database.collections
+      .get<DiaryEntry>("diary_entries")
+      .query(
+        Q.where("date", todayString),
+        Q.where("user_id", currentUser.id)
+      )
+      .observe()
+      .subscribe((entries) => {
+        updateTodayStats(entries, currentUser);
+      });
+    
+    return () => subscription.unsubscribe();
+  }, [currentUser, updateTodayStats]);
 
   const CustomPlusButton = () => (
-    <View className="items-center justify-center -mt-3 px-1">
+    <View className="items-center justify-center -mt-6 px-1">
       <TouchableOpacity
         onPress={() => setShowQuickLogModal(true)}
         style={{
@@ -27,18 +54,18 @@ export default function TabLayout(): React.ReactElement {
           shadowColor: colors.primary,
           shadowOffset: {
             width: 0,
-            height: 4,
+            height: 6,
           },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
+          shadowOpacity: 0.4,
+          shadowRadius: 12,
+          elevation: 12,
         }}
-        className="w-14 h-14 rounded-full items-center justify-center"
-        activeOpacity={0.9}
+        className="w-16 h-16 rounded-full items-center justify-center border-4 border-white dark:border-gray-900"
+        activeOpacity={0.8}
       >
         <MaterialCommunityIcons
           name="plus"
-          size={28}
+          size={32}
           color="white"
         />
       </TouchableOpacity>
@@ -59,24 +86,34 @@ export default function TabLayout(): React.ReactElement {
     size: number;
     IconComponent?: any;
   }) => (
-    <View className="items-center justify-center py-2 px-3 min-w-12">
+    <View className="items-center justify-center py-3 px-4 min-w-16">
       <View
         style={{
           backgroundColor: focused
-            ? `${colors.primary}${colorScheme === "dark" ? "18" : "10"}`
+            ? `${colors.primary}${colorScheme === "dark" ? "20" : "15"}`
             : "transparent",
+          transform: [{ scale: focused ? 1.05 : 1 }],
         }}
-        className="w-11 h-9 rounded-2xl items-center justify-center"
+        className="w-12 h-10 rounded-3xl items-center justify-center"
       >
         <IconComponent
           name={name}
-          size={24}
+          size={focused ? 25 : 24}
           color={focused ? colors.primary : color}
           style={{
-            opacity: focused ? 1 : 0.7,
+            opacity: focused ? 1 : 0.6,
           }}
         />
       </View>
+      {focused && (
+        <View
+          style={{
+            backgroundColor: colors.primary,
+            marginTop: 4,
+          }}
+          className="w-1 h-1 rounded-full"
+        />
+      )}
     </View>
   );
 
@@ -89,28 +126,31 @@ export default function TabLayout(): React.ReactElement {
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor:
             colorScheme === "dark"
-              ? colors.text.secondary
-              : `${colors.text.secondary}CC`,
+              ? colors.text.muted
+              : colors.text.secondary,
           tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopWidth: 0,
+            backgroundColor:
+              colorScheme === "dark"
+                ? "#1a1a1a" // Modern dark background
+                : "#ffffff", // Clean white for light mode
+            borderTopWidth: 0, // Remove top border completely
             position: "absolute",
-            elevation: 0,
+            elevation: colorScheme === "dark" ? 0 : 8,
             shadowColor:
               colorScheme === "dark"
-                ? "#000"
-                : colors.text.primary,
+                ? "transparent" // No shadow in dark mode for clean look
+                : "#000",
             shadowOffset: {
               width: 0,
               height: -2,
             },
-            shadowOpacity:
-              colorScheme === "dark" ? 0.2 : 0.06,
+            shadowOpacity: colorScheme === "dark" ? 0 : 0.1,
             shadowRadius: 8,
-            height: 72,
-            paddingBottom: 8,
-            paddingTop: 8,
-            paddingHorizontal: 12,
+            height: 70,
+            paddingBottom: 4,
+            paddingTop: 6,
+            paddingHorizontal: 8,
+            borderRadius: 0,
           },
         }}
       >
@@ -119,11 +159,7 @@ export default function TabLayout(): React.ReactElement {
           options={{
             tabBarIcon: ({ focused, color, size }) => (
               <TabIcon
-                name={
-                  focused
-                    ? "view-dashboard"
-                    : "view-dashboard-outline"
-                }
+                name={focused ? "home" : "home-outline"}
                 focused={focused}
                 color={color}
                 size={size}
@@ -137,9 +173,7 @@ export default function TabLayout(): React.ReactElement {
           options={{
             tabBarIcon: ({ focused, color, size }) => (
               <TabIcon
-                name={
-                  focused ? "notebook" : "notebook-outline"
-                }
+                name={focused ? "book" : "book-outline"}
                 focused={focused}
                 color={color}
                 size={size}
@@ -174,14 +208,14 @@ export default function TabLayout(): React.ReactElement {
           }}
         />
         <Tabs.Screen
-          name="profile"
+          name="feeds/index"
           options={{
             tabBarIcon: ({ focused, color, size }) => (
               <TabIcon
                 name={
                   focused
-                    ? "account-circle"
-                    : "account-circle-outline"
+                    ? "account-group"
+                    : "account-group-outline"
                 }
                 focused={focused}
                 color={color}

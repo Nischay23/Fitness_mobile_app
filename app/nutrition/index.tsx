@@ -24,9 +24,13 @@ import { Feather } from "@expo/vector-icons";
 
 import { useAppStore } from "@/stores/appStore";
 import { COLORS } from "@/constants/theme";
-import { CaloriesTab, MacrosTab, NutrientsTab } from "@/modules/nutrition";
+import {
+  CaloriesTab,
+  MacrosTab,
+  NutrientsTab,
+} from "@/modules/nutrition";
 
-const HEADER_HEIGHT = 64;
+const HEADER_HEIGHT = 72;
 const TABS_HEIGHT = 50;
 const DATE_NAVIGATOR_HEIGHT = 70;
 
@@ -77,8 +81,11 @@ NutritionPage.displayName = "NutritionPage";
 
 // The main nutrition screen
 export default function NutritionScreen() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<TabType>("calories");
+  const [currentDate, setCurrentDate] = useState(
+    new Date()
+  );
+  const [activeTab, setActiveTab] =
+    useState<TabType>("calories");
   const pagerRef = useRef<PagerView>(null);
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
@@ -86,12 +93,24 @@ export default function NutritionScreen() {
   const { currentUser } = useAppStore();
 
   // Animated values for smooth transitions
-  const headerTranslateY = useRef(new Animated.Value(0)).current;
-  const tabsTranslateY = useRef(new Animated.Value(0)).current;
-  const dateNavigatorTranslateY = useRef(new Animated.Value(0)).current;
-  const contentTranslateY = useRef(new Animated.Value(0)).current;
-  const tabIndicatorPosition = useRef(new Animated.Value(0)).current;
-  const tabContentOpacity = useRef(new Animated.Value(1)).current;
+  const headerTranslateY = useRef(
+    new Animated.Value(0)
+  ).current;
+  const tabsTranslateY = useRef(
+    new Animated.Value(0)
+  ).current;
+  const dateNavigatorTranslateY = useRef(
+    new Animated.Value(0)
+  ).current;
+  const contentTranslateY = useRef(
+    new Animated.Value(0)
+  ).current;
+  const tabIndicatorPosition = useRef(
+    new Animated.Value(0)
+  ).current;
+  const tabContentOpacity = useRef(
+    new Animated.Value(1)
+  ).current;
 
   // Tab configuration
   const tabs = [
@@ -106,8 +125,8 @@ export default function NutritionScreen() {
 
   // Optimize: Create only 21 pages (10 days before, today, 10 days after)
   const { dates, initialPage } = useMemo(() => {
-    const datesList = Array.from({ length: 21 }).map((_, i) =>
-      addDays(new Date(), i - 10)
+    const datesList = Array.from({ length: 21 }).map(
+      (_, i) => addDays(new Date(), i - 10)
     );
     return {
       dates: datesList,
@@ -146,7 +165,12 @@ export default function NutritionScreen() {
 
       setActiveTab(tab);
     },
-    [activeTab, tabIndicatorPosition, tabContentOpacity, tabs]
+    [
+      activeTab,
+      tabIndicatorPosition,
+      tabContentOpacity,
+      tabs,
+    ]
   );
 
   // When the user swipes, this updates our state
@@ -166,7 +190,9 @@ export default function NutritionScreen() {
       if (!pagerRef.current) return;
 
       const currentIndex = dates.findIndex(
-        (d) => format(d, "yyyy-MM-dd") === format(currentDate, "yyyy-MM-dd")
+        (d) =>
+          format(d, "yyyy-MM-dd") ===
+          format(currentDate, "yyyy-MM-dd")
       );
 
       if (currentIndex === -1) return;
@@ -185,7 +211,9 @@ export default function NutritionScreen() {
 
   // Initialize tab indicator position
   useEffect(() => {
-    const initialTabIndex = tabs.findIndex((t) => t.id === activeTab);
+    const initialTabIndex = tabs.findIndex(
+      (t) => t.id === activeTab
+    );
     tabIndicatorPosition.setValue(initialTabIndex);
   }, []);
 
@@ -199,7 +227,11 @@ export default function NutritionScreen() {
         }}
       >
         <StatusBar
-          barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+          barStyle={
+            colorScheme === "dark"
+              ? "light-content"
+              : "dark-content"
+          }
           backgroundColor={colors.background}
         />
         <View
@@ -230,8 +262,13 @@ export default function NutritionScreen() {
       }}
     >
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        barStyle={
+          colorScheme === "dark"
+            ? "light-content"
+            : "dark-content"
+        }
         backgroundColor={colors.background}
+        translucent={false}
       />
 
       <Stack.Screen
@@ -251,6 +288,7 @@ export default function NutritionScreen() {
           backgroundColor: colors.surface,
           paddingHorizontal: 16,
           paddingVertical: 12,
+          paddingTop: 16,
           zIndex: 30,
           transform: [{ translateY: headerTranslateY }],
           shadowColor: "#000",
@@ -271,7 +309,11 @@ export default function NutritionScreen() {
               backgroundColor: colors.surfaceElevated,
             }}
           >
-            <Feather name="arrow-left" size={18} color={colors.text.primary} />
+            <Feather
+              name="arrow-left"
+              size={18}
+              color={colors.text.primary}
+            />
           </Pressable>
 
           <Text
@@ -315,8 +357,11 @@ export default function NutritionScreen() {
               <Text
                 style={{
                   color:
-                    activeTab === tab.id ? "#007AFF" : colors.text.secondary,
-                  fontWeight: activeTab === tab.id ? "600" : "normal",
+                    activeTab === tab.id
+                      ? "#007AFF"
+                      : colors.text.secondary,
+                  fontWeight:
+                    activeTab === tab.id ? "600" : "normal",
                   fontSize: 14,
                 }}
               >
@@ -336,11 +381,15 @@ export default function NutritionScreen() {
             width: tabWidth,
             transform: [
               {
-                translateX: tabIndicatorPosition.interpolate({
-                  inputRange: [0, tabs.length - 1],
-                  outputRange: [0, (tabs.length - 1) * tabWidth],
-                  extrapolate: "clamp",
-                }),
+                translateX:
+                  tabIndicatorPosition.interpolate({
+                    inputRange: [0, tabs.length - 1],
+                    outputRange: [
+                      0,
+                      (tabs.length - 1) * tabWidth,
+                    ],
+                    extrapolate: "clamp",
+                  }),
               },
             ],
           }}
@@ -361,7 +410,9 @@ export default function NutritionScreen() {
           paddingVertical: 10,
           paddingHorizontal: 20,
           zIndex: 20,
-          transform: [{ translateY: dateNavigatorTranslateY }],
+          transform: [
+            { translateY: dateNavigatorTranslateY },
+          ],
         }}
       >
         <View className="flex-row items-center justify-between flex-1">
@@ -382,16 +433,24 @@ export default function NutritionScreen() {
           <View className="items-center">
             <Text
               style={{
-                color: isToday(currentDate) ? "#007AFF" : colors.text.primary,
-                fontWeight: isToday(currentDate) ? "700" : "600",
+                color: isToday(currentDate)
+                  ? "#007AFF"
+                  : colors.text.primary,
+                fontWeight: isToday(currentDate)
+                  ? "700"
+                  : "600",
               }}
               className="text-base"
             >
-              {isToday(currentDate) ? "Today" : format(currentDate, "EEEE")}
+              {isToday(currentDate)
+                ? "Today"
+                : format(currentDate, "EEEE")}
             </Text>
             <Text
               style={{
-                color: isToday(currentDate) ? "#007AFF" : colors.text.secondary,
+                color: isToday(currentDate)
+                  ? "#007AFF"
+                  : colors.text.secondary,
                 opacity: isToday(currentDate) ? 0.8 : 1,
               }}
               className="text-xs mt-0.5"
@@ -427,7 +486,10 @@ export default function NutritionScreen() {
       >
         <View
           style={{
-            height: HEADER_HEIGHT + TABS_HEIGHT + DATE_NAVIGATOR_HEIGHT,
+            height:
+              HEADER_HEIGHT +
+              TABS_HEIGHT +
+              DATE_NAVIGATOR_HEIGHT,
           }}
         />
         <PagerView

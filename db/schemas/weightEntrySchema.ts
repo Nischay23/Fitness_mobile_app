@@ -8,5 +8,7 @@ export const weightEntrySchema = tableSchema({
     { name: "date", type: "string", isIndexed: true }, // YYYY-MM-DD
     { name: "notes", type: "string", isOptional: true },
     { name: "user_id", type: "string", isIndexed: true },
+    { name: "created_at", type: "number" },
+    { name: "updated_at", type: "number" },
   ],
 });

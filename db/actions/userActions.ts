@@ -1,12 +1,24 @@
-// db/actions/userActions.ts
-
 import { database } from "@/db";
-import { User } from "@/db/models/User";
-
+import { User, UserProfileData } from "@/db/models/User";
+import { Q } from "@nozbe/watermelondb";
+import { calculateUserGoals } from "@/modules/onboarding/services/goalCalculator";
 // Get the users collection from the database
 const users = database.collections.get<User>("users");
 
-// Helper function to retry operations
+interface UserCreationData {
+  server_id: string;
+  email?: string;
+  name: string;
+  avatar_url?: string;
+  gender: "male" | "female" | "other";
+  dateOfBirth: string;
+  heightCm: number;
+  currentWeightKg: number;
+  goalType: string;
+  activityLevel: string;
+  targetWeightKg: number;
+}
+
 const retryOperation = async <T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
@@ -18,11 +30,19 @@ const retryOperation = async <T>(
     try {
       return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      console.warn(`Attempt ${attempt} failed:`, lastError.message);
+      lastError =
+        error instanceof Error
+          ? error
+          : new Error(String(error));
+      console.warn(
+        `Attempt ${attempt} failed:`,
+        lastError.message
+      );
 
       if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, delay * attempt));
+        await new Promise((resolve) =>
+          setTimeout(resolve, delay * attempt)
+        );
       }
     }
   }
@@ -38,7 +58,9 @@ export async function getActiveUser(): Promise<User | null> {
     const user = await retryOperation(async () => {
       // Get the first user in the database
       const usersList = await users.query().fetch();
-      console.log(`📊 Found ${usersList.length} users in database`);
+      console.log(
+        `📊 Found ${usersList.length} users in database`
+      );
       return usersList[0] || null;
     });
 
@@ -54,41 +76,42 @@ export async function getActiveUser(): Promise<User | null> {
 }
 
 // Create a new user
-export async function createUser(userData: {
-  name: string;
-  dateOfBirth: string;
-  gender: string;
-  heightCm: number;
-  currentWeightKg: number;
-  activityLevel?: string;
-  goalType?: string;
-}): Promise<User> {
-  try {
-    let user: User | null = null;
+export const createUser = async (
+  profile: UserProfileData
+): Promise<User> => {
+  return await database.write(async () => {
+    // --- THIS IS THE NEW LOGIC ---
+    // 1. First, call our pure calculation function with the profile data.
+    const calculatedGoals = calculateUserGoals(profile);
 
-    // Use a batch operation to ensure data consistency
-    await database.write(async () => {
-      user = await users.create((user) => {
-        user.name = userData.name;
-        user.dateOfBirth = userData.dateOfBirth;
-        user.gender = userData.gender;
-        user.heightCm = userData.heightCm;
-        user.currentWeightKg = userData.currentWeightKg;
-        user.activityLevel = (userData.activityLevel as any) || "sedentary";
-        user.goalType = (userData.goalType as any) || "maintain";
+    // 2. Now, create the user record, including both the raw data
+    //    from the form AND the newly calculated goals.
+    return await database.collections
+      .get<User>("users")
+      .create((user) => {
+        // Raw data
+        user.serverId = profile.server_id;
+        user.email = profile.email || "";
+        user.name = profile.name;
+        user.avatarUrl = profile.avatar_url;
+        user.gender = profile.gender;
+        user.dateOfBirth = profile.dateOfBirth;
+        user.heightCm = profile.heightCm;
+        user.currentWeightKg = profile.currentWeightKg;
+        user.goalType = profile.goalType;
+        user.activityLevel = profile.activityLevel;
+        user.goalWeightKg = profile.targetWeightKg;
+
+        // Calculated data
+        user.tdee = calculatedGoals.tdee;
+        user.dailyCalorieGoal =
+          calculatedGoals.dailyCalorieGoal;
+        user.proteinGoal_g = calculatedGoals.proteinGoal_g;
+        user.carbsGoal_g = calculatedGoals.carbsGoal_g;
+        user.fatGoal_g = calculatedGoals.fatGoal_g;
       });
-    });
-
-    if (!user) {
-      throw new Error("Failed to create user");
-    }
-
-    return user;
-  } catch (error) {
-    console.error("Error creating user:", error);
-    throw error;
-  }
-}
+  });
+};
 
 // Update user data
 export async function updateUser(
@@ -117,7 +140,9 @@ export async function updateUser(
 }
 
 // Delete user
-export async function deleteUser(user: User): Promise<void> {
+export async function deleteUser(
+  user: User
+): Promise<void> {
   try {
     await database.write(async () => {
       await user.destroyPermanently();
@@ -127,3 +152,16 @@ export async function deleteUser(user: User): Promise<void> {
     throw error;
   }
 }
+
+//Find user by supabaseId
+
+export const findUserByServerId = async (
+  serverId: string
+): Promise<User | null> => {
+  const usersCollection =
+    database.collections.get<User>("users");
+  const users = await usersCollection
+    .query(Q.where("server_id", serverId))
+    .fetch();
+  return users.length > 0 ? users[0] : null;
+};

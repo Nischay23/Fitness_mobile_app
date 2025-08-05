@@ -5,13 +5,13 @@
     },
     "name": "fitness-app",
     "slug": "fitness-app",
-    "owner": "nischay23",
+    "owner": "nischay_23",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -25,9 +25,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-
-      "permissions": ["android.permission.INTERNET"],
-      "package": "com.nischay23.fitnessapp"
+      "permissions": [
+        "android.permission.INTERNET"
+      ],
+      "package": "com.nischay23.fitnessapp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +38,7 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-google-signin/google-signin",
       [
         "expo-splash-screen",
         {
@@ -45,7 +48,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
@@ -55,7 +59,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "3c5280f4-ad97-4abe-aa06-3c17435eb7b0"
+        "projectId": "a068f3c3-5d6e-4679-a5c3-e7c592ba3b60"
       }
     }
   }
