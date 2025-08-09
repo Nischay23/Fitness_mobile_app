@@ -32,7 +32,7 @@ const BaseDiaryList = ({
   const [foodsMap, setFoodsMap] = useState<
     Record<string, Food>
   >({});
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
 
   // Load food data when entries change
@@ -150,9 +150,9 @@ const BaseDiaryList = ({
   };
 
   return (
-    <View style={{ paddingTop: 12 }}>
-      {/* Meal Sections with improved spacing */}
-      <View style={{ gap: 16 }}>
+    <View className="pt-2">
+      {/* Compact Meal Sections */}
+      <View className="gap-3">
         <MealSection
           mealName="breakfast"
           items={mealsData.breakfast}
@@ -175,53 +175,35 @@ const BaseDiaryList = ({
         />
       </View>
 
-      {/* Enhanced Action Buttons Section */}
-      <View
-        style={{
-          paddingHorizontal: 0,
-          paddingTop: 24,
-          paddingBottom: 16,
-          gap: 12,
-        }}
-      >
-        {/* Quick Actions Grid */}
-        <View style={{ flexDirection: "row", gap: 12 }}>
+      {/* Compact Action Buttons Section */}
+      <View className="px-0 pt-4 pb-3 gap-3">
+        {/* Compact Quick Actions Grid */}
+        <View className="flex-row gap-3">
           <TouchableOpacity
             onPress={handleNutritionPress}
+            className="flex-1 rounded-xl p-3 flex-row items-center justify-center gap-2"
             style={{
-              flex: 1,
               backgroundColor: colors.surface,
-              borderRadius: 16,
-              padding: 16,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
               borderWidth: 1,
               borderColor: colors.border + "40",
             }}
           >
             <View
+              className="w-6 h-6 rounded-full items-center justify-center"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
                 backgroundColor: "#3B82F6" + "20",
-                alignItems: "center",
-                justifyContent: "center",
               }}
             >
               <Ionicons
                 name="pie-chart"
-                size={18}
+                size={14}
                 color="#3B82F6"
               />
             </View>
             <Text
+              className="text-sm font-semibold"
               style={{
                 color: colors.text.primary,
-                fontSize: 16,
-                fontWeight: "600",
               }}
             >
               Nutrition
@@ -230,40 +212,29 @@ const BaseDiaryList = ({
 
           <TouchableOpacity
             onPress={handleNotesPress}
+            className="flex-1 rounded-xl p-3 flex-row items-center justify-center gap-2"
             style={{
-              flex: 1,
               backgroundColor: colors.surface,
-              borderRadius: 16,
-              padding: 16,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
               borderWidth: 1,
               borderColor: colors.border + "40",
             }}
           >
             <View
+              className="w-6 h-6 rounded-full items-center justify-center"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
                 backgroundColor: "#F59E0B" + "20",
-                alignItems: "center",
-                justifyContent: "center",
               }}
             >
               <Ionicons
                 name="document-text"
-                size={18}
+                size={14}
                 color="#F59E0B"
               />
             </View>
             <Text
+              className="text-sm font-semibold"
               style={{
                 color: colors.text.primary,
-                fontSize: 16,
-                fontWeight: "600",
               }}
             >
               Notes
@@ -271,48 +242,30 @@ const BaseDiaryList = ({
           </TouchableOpacity>
         </View>
 
-        {/* Primary Action Button */}
+        {/* Compact Primary Action Button */}
         <TouchableOpacity
           onPress={handleCompleteDiaryPress}
+          className="rounded-xl p-4 flex-row items-center justify-center gap-3"
           style={{
-            backgroundColor: "#059669",
-            borderRadius: 16,
-            padding: 18,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            shadowColor: "#059669",
-            shadowOffset: {
-              width: 0,
-              height: 4,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 8,
+            backgroundColor: isDark ? "#00D4AA" : "#059669",
           }}
         >
           <View
+            className="w-5 h-5 rounded-lg items-center justify-center"
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: 12,
               backgroundColor: "rgba(255,255,255,0.25)",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
             <Ionicons
               name="checkmark"
-              size={16}
+              size={12}
               color="white"
             />
           </View>
           <Text
+            className="text-base font-bold"
             style={{
               color: "white",
-              fontSize: 18,
-              fontWeight: "700",
             }}
           >
             Complete Diary

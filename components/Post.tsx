@@ -31,6 +31,7 @@ type PostWithAuthor = {
   caption: string | null;
   image_url: string;
   like_count: number;
+  comment_count: number;
   created_at: string;
   author: AuthorProfile | null;
   is_liked: boolean;
@@ -55,14 +56,28 @@ export default function Post({
   const [likeCount, setLikeCount] = useState(
     initialPost.like_count
   );
+  const [commentCount, setCommentCount] = useState(
+    initialPost.comment_count
+  );
   const [isLiking, setIsLiking] = useState(false);
+
+  // Double-click detection
+  const [lastTap, setLastTap] = useState<number | null>(
+    null
+  );
+  const DOUBLE_PRESS_DELAY = 300;
 
   // This is the key: This effect ensures that if the parent data changes (e.g., after a refresh),
   // the component's state updates to match the new reality from the database.
   useEffect(() => {
     setIsLiked(initialPost.is_liked);
     setLikeCount(initialPost.like_count);
-  }, [initialPost.is_liked, initialPost.like_count]);
+    setCommentCount(initialPost.comment_count);
+  }, [
+    initialPost.is_liked,
+    initialPost.like_count,
+    initialPost.comment_count,
+  ]);
 
   const handleToggleLike = async () => {
     if (isLiking) return;
@@ -106,6 +121,55 @@ export default function Post({
     } finally {
       setIsLiking(false);
     }
+  };
+
+  // Function to like post (only like, no toggle) for double-click
+  const handleLikePost = async () => {
+    if (isLiking || isLiked) return; // Don't like if already liked or in progress
+    setIsLiking(true);
+
+    // Optimistic update
+    const previousLikeState = isLiked;
+    const previousLikeCount = likeCount;
+
+    setIsLiked(true);
+    setLikeCount(previousLikeCount + 1);
+
+    // Heart animation
+    heartScale.value = withSequence(
+      withSpring(1.5, { damping: 8, stiffness: 200 }),
+      withSpring(1, { damping: 10, stiffness: 200 })
+    );
+
+    try {
+      const { data, error } =
+        await supabase.functions.invoke("like-post", {
+          body: { post_id: initialPost.id },
+        });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Error liking post:", error);
+      // Revert optimistic update
+      setIsLiked(previousLikeState);
+      setLikeCount(previousLikeCount);
+      Alert.alert("Error", "Could not like post.");
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  // Handle double-click on image
+  const handleImagePress = () => {
+    const now = Date.now();
+    if (lastTap && now - lastTap < DOUBLE_PRESS_DELAY) {
+      if (!isLiked) {
+        handleToggleLike();
+      }
+    }
+    setLastTap(now);
   };
 
   const handleCommentPress = () => {
@@ -164,10 +228,12 @@ export default function Post({
       </View>
 
       {/* Image */}
-      <Image
-        source={{ uri: initialPost.image_url }}
-        style={styles.postImage}
-      />
+      <Pressable onPress={handleImagePress}>
+        <Image
+          source={{ uri: initialPost.image_url }}
+          style={styles.postImage}
+        />
+      </Pressable>
 
       {/* Actions */}
       <View
@@ -201,16 +267,27 @@ export default function Post({
             {likeCount.toLocaleString()}
           </Text>
         </View>
-        <Pressable
-          onPress={handleCommentPress}
-          style={styles.actionButton}
-        >
-          <Ionicons
-            name="chatbubble-outline"
-            size={26}
-            color={colors.text.primary}
-          />
-        </Pressable>
+
+        <View style={styles.commentContainer}>
+          <Pressable
+            onPress={handleCommentPress}
+            style={styles.actionButton}
+          >
+            <Ionicons
+              name="chatbubble-outline"
+              size={26}
+              color={colors.text.primary}
+            />
+          </Pressable>
+          <Text
+            style={[
+              styles.commentsCount,
+              { color: colors.text.primary },
+            ]}
+          >
+            {commentCount.toLocaleString()}
+          </Text>
+        </View>
       </View>
 
       {/* Footer */}
@@ -291,10 +368,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 20,
   },
+  commentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
   actionButton: {
     padding: 4,
   },
   likesCount: {
+    fontWeight: "600",
+    fontSize: 15,
+    marginLeft: 8,
+  },
+  commentsCount: {
     fontWeight: "600",
     fontSize: 15,
     marginLeft: 8,

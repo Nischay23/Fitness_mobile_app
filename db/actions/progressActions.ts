@@ -5,6 +5,8 @@ import { database } from "../index";
 import { WeightEntry } from "../models/WeightEntry";
 import { User } from "../models/User";
 import { useAppStore } from "@/stores/appStore";
+import { useUserStore } from "@/stores/useUserStore";
+import { updateUserAndRecalculateGoals } from "./userActions";
 
 const weightEntriesCollection =
   database.collections.get<WeightEntry>("weight_entries");
@@ -28,11 +30,15 @@ export const logOrUpdateWeight = async (
   );
 
   await database.write(async (writer) => {
-    const usersCollection = database.collections.get<User>("users");
+    const usersCollection =
+      database.collections.get<User>("users");
 
     // Find if an entry for this date already exists
     const existingEntry = await weightEntriesCollection
-      .query(Q.where("date", date), Q.where("user_id", userId))
+      .query(
+        Q.where("date", date),
+        Q.where("user_id", userId)
+      )
       .fetch();
 
     if (existingEntry.length > 0) {
@@ -40,7 +46,9 @@ export const logOrUpdateWeight = async (
       await existingEntry[0].update((entry) => {
         entry.weightKg = weightKg;
       });
-      console.log(`✅ Weight entry for ${date} updated to ${weightKg}kg.`);
+      console.log(
+        `✅ Weight entry for ${date} updated to ${weightKg}kg.`
+      );
     } else {
       // If not, create a new one
       await weightEntriesCollection.create((entry) => {
@@ -56,24 +64,51 @@ export const logOrUpdateWeight = async (
     // Also, update the main user model's currentWeightKg if this is the latest entry
     // (For simplicity, we'll just update it every time for now)
     const user = await usersCollection.find(userId);
-    await user.update((u) => {
-      u.currentWeightKg = weightKg;
-    });
+    const previousWeight = user.currentWeightKg;
 
-    console.log(`🔄 Database write transaction completed for ${weightKg}kg`);
+    // Update the user's current weight and recalculate goals if there's a significant change
+    const weightDifference = Math.abs(
+      weightKg - previousWeight
+    );
+
+    if (weightDifference >= 0.5) {
+      // Significant weight change - recalculate goals
+      console.log(
+        `🔄 Significant weight change detected (${weightDifference}kg), recalculating goals...`
+      );
+      await updateUserAndRecalculateGoals(userId, {
+        currentWeightKg: weightKg,
+      });
+    } else {
+      // Minor weight change - just update the weight
+      await user.update((u) => {
+        u.currentWeightKg = weightKg;
+      });
+    }
+
+    console.log(
+      `🔄 Database write transaction completed for ${weightKg}kg`
+    );
   });
 
   // Force a small delay to ensure database transaction is committed
   await new Promise((resolve) => setTimeout(resolve, 100));
 
   // Also update the app store with the new weight to ensure immediate UI updates
-  const { currentUser, setCurrentUser } = useAppStore.getState();
+  const { currentUser, setCurrentUser } =
+    useAppStore.getState();
+  const { setUserData } = useUserStore.getState();
+
   if (currentUser && currentUser.id === userId) {
-    // Just fetch the updated user from database and set it in the store
-    const usersCollection = database.collections.get<User>("users");
+    // Just fetch the updated user from database and set it in both stores
+    const usersCollection =
+      database.collections.get<User>("users");
     const updatedUser = await usersCollection.find(userId);
     setCurrentUser(updatedUser);
-    console.log(`🔄 App store updated with new weight: ${weightKg}kg`);
+    setUserData(updatedUser);
+    console.log(
+      `🔄 Both stores updated with new weight: ${weightKg}kg`
+    );
   }
 
   console.log(
@@ -90,7 +125,10 @@ export const logOrUpdateWeight = async (
  */
 export const observeWeightHistory = (userId: string) => {
   return weightEntriesCollection
-    .query(Q.where("user_id", userId), Q.sortBy("date", Q.desc)) // Sort descending, newest first
+    .query(
+      Q.where("user_id", userId),
+      Q.sortBy("date", Q.desc)
+    ) // Sort descending, newest first
     .observe();
 };
 
@@ -100,7 +138,9 @@ export const observeWeightHistory = (userId: string) => {
  *
  * @param {string} userId - The ID of the current user.
  */
-export const createSampleWeightData = async (userId: string) => {
+export const createSampleWeightData = async (
+  userId: string
+) => {
   const today = new Date();
   const sampleDates = [];
 
@@ -116,8 +156,14 @@ export const createSampleWeightData = async (userId: string) => {
 
   // Add the sample data
   for (const entry of sampleDates) {
-    await logOrUpdateWeight(userId, entry.weight, entry.date);
+    await logOrUpdateWeight(
+      userId,
+      entry.weight,
+      entry.date
+    );
   }
 
-  console.log("✅ Sample weight data created successfully!");
+  console.log(
+    "✅ Sample weight data created successfully!"
+  );
 };

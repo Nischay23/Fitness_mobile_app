@@ -6,6 +6,7 @@ import React, {
 import { useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/stores/appStore";
+import { useUserStore } from "@/stores/useUserStore";
 import { findUserByServerId } from "@/db/actions/userActions";
 
 interface AuthContextType {
@@ -39,6 +40,7 @@ export function AuthProvider({
     setSupabaseUser,
     setSupabaseProfile,
   } = useAppStore();
+  const { setUserData } = useUserStore();
 
   useEffect(() => {
     const { data: authListener } =
@@ -69,6 +71,7 @@ export function AuthProvider({
                   "Local user found. Welcome back!"
                 );
                 setCurrentUser(localUser);
+                setUserData(localUser); // Update useUserStore as well
                 setOnboardingComplete(true);
                 router.replace("/(tabs)");
               } else {

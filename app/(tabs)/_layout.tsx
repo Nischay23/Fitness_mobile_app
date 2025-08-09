@@ -29,7 +29,7 @@ export default function TabLayout(): React.ReactElement {
   // Global observer for diary entries to keep home store updated
   useEffect(() => {
     if (!currentUser) return;
-    
+
     const todayString = format(new Date(), "yyyy-MM-dd");
     const subscription = database.collections
       .get<DiaryEntry>("diary_entries")
@@ -41,7 +41,7 @@ export default function TabLayout(): React.ReactElement {
       .subscribe((entries) => {
         updateTodayStats(entries, currentUser);
       });
-    
+
     return () => subscription.unsubscribe();
   }, [currentUser, updateTodayStats]);
 
@@ -146,8 +146,8 @@ export default function TabLayout(): React.ReactElement {
             },
             shadowOpacity: colorScheme === "dark" ? 0 : 0.1,
             shadowRadius: 8,
-            height: 70,
-            paddingBottom: 4,
+            height: 65,
+
             paddingTop: 6,
             paddingHorizontal: 8,
             borderRadius: 0,

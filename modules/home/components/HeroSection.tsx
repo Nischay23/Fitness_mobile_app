@@ -1,71 +1,118 @@
-import React from "react";
-import { View, Text, Pressable } from "react-native";
+import React, { useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Animated,
+  Easing,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useHomeStore } from "../store/homeStore";
 import { ProgressRing } from "./ProgressRing";
 import { useTheme } from "../hooks/useTheme";
+import { LinearGradient } from "expo-linear-gradient";
 
-type MacroCircleProps = {
+interface MacroProgressBarProps {
   label: string;
-  goal: number;
-  short: string;
-  color: string;
   current: number;
+  goal: number;
+  color: string;
   isDark: boolean;
-};
+}
 
-const MacroCircle: React.FC<MacroCircleProps> = ({
+const MacroProgressBar: React.FC<MacroProgressBarProps> = ({
   label,
-  short,
   current,
   goal,
   color,
   isDark,
 }) => {
-  // Conditional text colors
-  const labelColor = isDark
-    ? "text-slate-200"
-    : "text-slate-700";
-  const valueColor = isDark
-    ? "text-slate-400"
-    : "text-slate-500";
+  const progress =
+    goal > 0 ? Math.min(current / goal, 1) : 0;
+  const percentage = Math.round(progress * 100);
+  const animatedWidth = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  useEffect(() => {
+    Animated.timing(animatedWidth, {
+      toValue: progress,
+      duration: 800,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start();
+  }, [progress]);
 
   return (
-    <View className="items-center flex-1">
-      {/* Progress Ring */}
-      <View className="relative w-12 h-12 justify-center items-center mb-2">
-        <ProgressRing
-          progress={goal > 0 ? current / goal : 0}
-          size={44}
-          strokeWidth={4}
-          backgroundColor={isDark ? "#1E293B" : "#F1F5F9"}
-          progressColor={color}
-          isDark={isDark}
-        />
+    <View style={{ flex: 1, marginHorizontal: 4 }}>
+      {/* Label and values */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 2,
+        }}
+      >
         <Text
-          className="absolute font-bold text-xs"
-          style={{ color }}
+          style={{
+            fontSize: 14,
+            fontFamily: "Inter_18pt-SemiBold",
+            color: isDark ? "#F3F4F6" : "#374151",
+          }}
         >
-          {short}
+          {label}
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            fontFamily: "Inter_18pt-Bold",
+            color: color,
+          }}
+        >
+          {Math.round(current)}g
         </Text>
       </View>
 
-      {/* Labels */}
-      <Text
-        className={`font-medium text-xs mb-1 ${labelColor}`}
+      {/* Progress bar track */}
+      <View
+        style={{
+          height: 8,
+          backgroundColor: isDark ? "#374151" : "#E5E7EB",
+          borderRadius: 6,
+          overflow: "hidden",
+        }}
       >
-        {label}
-      </Text>
+        {/* Animated progress fill */}
+        <Animated.View
+          style={{
+            height: "100%",
+            borderRadius: 6,
+            backgroundColor: color,
+            width: animatedWidth.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["0%", "100%"],
+            }),
+            shadowColor: color,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.4,
+            shadowRadius: 4,
+          }}
+        />
+      </View>
+
+      {/* Percentage */}
       <Text
-        className={`text-xs font-semibold ${valueColor}`}
+        style={{
+          fontSize: 12,
+          fontFamily: "Inter_18pt-SemiBold",
+          color: color,
+          textAlign: "center",
+          marginTop: 6,
+        }}
       >
-        {Math.round(current)}g
-      </Text>
-      <Text
-        className="text-xs font-bold mt-0.5"
-        style={{ color }}
-      >
-        {goal > 0 ? Math.round((current / goal) * 100) : 0}%
+        {percentage}%
       </Text>
     </View>
   );
@@ -75,16 +122,27 @@ const MacroCircle: React.FC<MacroCircleProps> = ({
 export const HeroSection: React.FC = () => {
   const { todayStats } = useHomeStore();
   const { isDark } = useTheme();
+  const router = useRouter();
+  const slideUpAnim = useRef(
+    new Animated.Value(50)
+  ).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Colors and classes based on theme
-  const containerBg = isDark ? "bg-gray-900" : "bg-white";
-  const headerBg = isDark ? "bg-black/20" : "bg-white/50";
-  const headerText = isDark
-    ? "text-white"
-    : "text-gray-900";
-  const subText = isDark
-    ? "text-gray-400"
-    : "text-gray-600";
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(slideUpAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.back(1.1)),
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const caloriesRemaining = Math.max(
     0,
@@ -99,219 +157,386 @@ export const HeroSection: React.FC = () => {
   const macros = [
     {
       label: "Protein",
-      short: "P",
       current: todayStats.proteinConsumed,
       goal: todayStats.proteinGoal,
-      color: "#3B82F6",
+      color: "#60A5FA",
     },
     {
       label: "Carbs",
-      short: "C",
       current: todayStats.carbsConsumed,
       goal: todayStats.carbsGoal,
-      color: "#F59E0B",
+      color: "#FBBF24",
     },
     {
       label: "Fat",
-      short: "F",
       current: todayStats.fatConsumed,
       goal: todayStats.fatGoal,
-      color: "#8B5CF6",
+      color: "#A78BFA",
     },
   ];
 
+  const gradientColors: [string, string, ...string[]] =
+    isDark
+      ? ["#1E293B", "#0F172A", "#020617"]
+      : ["#FFFFFF", "#F8FAFC", "#F1F5F9"];
+
   return (
-    <View
-      className={`${containerBg} rounded-3xl mx-4 my-3 overflow-hidden`}
+    <Animated.View
+      style={{
+        transform: [{ translateY: slideUpAnim }],
+        opacity: fadeAnim,
+      }}
     >
-      {/* Glass-morphic Header */}
-      <View
-        className={`${headerBg} backdrop-blur-lg px-4 py-3 flex-row justify-between items-center`}
+      <Pressable
+        onPress={() => router.push("/nutrition" as any)}
+        style={({ pressed }) => ({
+          marginHorizontal: 32,
+          marginVertical: 16,
+          borderRadius: 28,
+          overflow: "hidden",
+          opacity: pressed ? 0.95 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+          shadowColor: isDark ? "#000000" : "#1F2937",
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: isDark ? 0.4 : 0.15,
+          shadowRadius: 20,
+          elevation: 12,
+        })}
       >
-        <View>
-          <Text
-            className={`font-bold text-lg ${headerText}`}
-          >
-            Today's Progress
-          </Text>
-          <Text
-            className={`text-xs font-medium ${subText}`}
-          >
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "short",
-              day: "numeric",
-            })}
-          </Text>
-        </View>
-        <Pressable
-          className="w-9 h-9 rounded-xl justify-center items-center"
+        <LinearGradient
+          colors={gradientColors}
           style={{
-            backgroundColor: isDark
-              ? "rgba(255,255,255,0.1)"
-              : "rgba(0,0,0,0.05)",
+            borderRadius: 28,
+            borderWidth: isDark ? 1 : 0.5,
+            borderColor: isDark
+              ? "rgba(148,163,184,0.2)"
+              : "rgba(148,163,184,0.3)",
           }}
         >
-          <Ionicons
-            name="notifications-outline"
-            size={18}
-            color={isDark ? "#CBD5E1" : "#334155"}
-          />
-        </Pressable>
-      </View>
-
-      {/* Main Content Area */}
-      <View className="p-4 flex-row items-center justify-between">
-        {/* Calorie Ring */}
-        <View className="items-center mr-4">
-          <View className="relative w-24 h-24 justify-center items-center mb-2">
-            <ProgressRing
-              progress={calorieProgress}
-              size={88}
-              strokeWidth={6}
-              backgroundColor={
-                isDark ? "#1E293B" : "#E2E8F0"
-              }
-              progressColor={isDark ? "#10B981" : "#059669"}
-              isDark={isDark}
-            />
-            <View className="absolute items-center">
+          {/* Header Section - More Compact */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 18,
+              paddingTop: 18,
+              paddingBottom: 12,
+            }}
+          >
+            <View>
               <Text
-                className={`text-xl font-bold ${headerText}`}
+                style={{
+                  fontSize: 24,
+                  fontFamily: "Inter_18pt-Bold",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                  marginBottom: 4,
+                }}
               >
-                {Math.round(todayStats.caloriesConsumed)}
+                Today's Progress
               </Text>
               <Text
-                className={`text-xs font-medium ${subText}`}
+                style={{
+                  fontSize: 15,
+                  fontFamily: "Inter_18pt-Medium",
+                  color: isDark ? "#94A3B8" : "#64748B",
+                }}
               >
-                of{" "}
-                {Math.round(todayStats.caloriesGoal / 1000)}
-                k
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </Text>
+            </View>
+
+            <Pressable
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: isDark
+                  ? "rgba(148,163,184,0.15)"
+                  : "rgba(148,163,184,0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+                shadowColor: isDark ? "#000000" : "#64748B",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: isDark ? 0.3 : 0.1,
+                shadowRadius: 8,
+              }}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color={isDark ? "#CBD5E1" : "#475569"}
+              />
+            </Pressable>
+          </View>
+
+          {/* Main Content - More Compact */}
+          <View
+            style={{
+              flexDirection: "row",
+              paddingHorizontal: 16,
+              paddingBottom: 14,
+              alignItems: "center",
+            }}
+          >
+            {/* Calorie Ring Section - Larger */}
+            <View
+              style={{
+                alignItems: "center",
+                marginRight: 20,
+              }}
+            >
+              {/* Calories Label */}
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Inter_18pt-SemiBold",
+                  color: isDark ? "#CBD5E1" : "#475569",
+                  marginBottom: 8,
+                }}
+              >
+                Calories
+              </Text>
+
+              <View
+                style={{
+                  position: "relative",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 10,
+                }}
+              >
+                <ProgressRing
+                  progress={calorieProgress}
+                  size={110}
+                  strokeWidth={8}
+                  backgroundColor={
+                    isDark ? "#374151" : "#E2E8F0"
+                  }
+                  progressColor={
+                    isDark ? "#34D399" : "#10B981"
+                  }
+                  glowEffect={true}
+                  isDark={isDark}
+                />
+                <View
+                  style={{
+                    position: "absolute",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontFamily: "Inter_18pt-Bold",
+                      color: isDark ? "#F8FAFC" : "#0F172A",
+                    }}
+                  >
+                    {Math.round(
+                      todayStats.caloriesConsumed
+                    )}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontFamily: "Inter_18pt-Medium",
+                      color: isDark ? "#94A3B8" : "#64748B",
+                    }}
+                  >
+                    of {Math.round(todayStats.caloriesGoal)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Calories remaining badge - More Compact */}
+              <View
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(52,211,153,0.2)"
+                    : "rgba(16,185,129,0.15)",
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: isDark
+                    ? "#34D399"
+                    : "#10B981",
+                  shadowColor: isDark
+                    ? "#34D399"
+                    : "#10B981",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: "Inter_18pt-SemiBold",
+                    color: isDark ? "#34D399" : "#047857",
+                  }}
+                >
+                  {Math.round(caloriesRemaining)} left
+                </Text>
+              </View>
+            </View>
+
+            {/* Macros Section - More Compact */}
+            <View style={{ flex: 1 }}>
+              <View style={{ gap: 0 }}>
+                {macros.map((macro) => (
+                  <MacroProgressBar
+                    key={macro.label}
+                    label={macro.label}
+                    current={macro.current}
+                    goal={macro.goal}
+                    color={macro.color}
+                    isDark={isDark}
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom Stats Row - More Compact */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-around",
+              paddingHorizontal: 10,
+              paddingVertical: 2,
+              backgroundColor: isDark
+                ? "rgba(148,163,184,0.08)"
+                : "rgba(148,163,184,0.06)",
+              borderTopWidth: 1,
+              borderTopColor: isDark
+                ? "rgba(148,163,184,0.1)"
+                : "rgba(148,163,184,0.15)",
+            }}
+          >
+            {/* Steps */}
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: isDark
+                    ? "rgba(52,211,153,0.2)"
+                    : "rgba(16,185,129,0.15)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 6,
+                  shadowColor: isDark
+                    ? "#34D399"
+                    : "#10B981",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 4,
+                }}
+              >
+                <Ionicons
+                  name="walk"
+                  size={18}
+                  color={isDark ? "#34D399" : "#047857"}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: "Inter_18pt-Bold",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                }}
+              >
+                {(todayStats.stepsCount / 1000).toFixed(1)}k
+              </Text>
+            </View>
+
+            {/* Water */}
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: isDark
+                    ? "rgba(96,165,250,0.2)"
+                    : "rgba(59,130,246,0.15)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 6,
+                  shadowColor: isDark
+                    ? "#60A5FA"
+                    : "#3B82F6",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 4,
+                }}
+              >
+                <Ionicons
+                  name="water"
+                  size={18}
+                  color={isDark ? "#60A5FA" : "#1D4ED8"}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: "Inter_18pt-Bold",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                }}
+              >
+                {(todayStats.waterConsumed / 1000).toFixed(
+                  1
+                )}
+                L
+              </Text>
+            </View>
+
+            {/* Burned */}
+            <View style={{ alignItems: "center" }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: isDark
+                    ? "rgba(248,113,113,0.2)"
+                    : "rgba(239,68,68,0.15)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 6,
+                  shadowColor: isDark
+                    ? "#F87171"
+                    : "#EF4444",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 4,
+                }}
+              >
+                <Ionicons
+                  name="flame"
+                  size={18}
+                  color={isDark ? "#F87171" : "#DC2626"}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: "Inter_18pt-Bold",
+                  color: isDark ? "#F8FAFC" : "#0F172A",
+                }}
+              >
+                {Math.round(todayStats.caloriesBurned)}
               </Text>
             </View>
           </View>
-          <View
-            className="px-3 py-1 rounded-full"
-            style={{
-              backgroundColor: isDark
-                ? "rgba(16,185,129,0.2)"
-                : "rgba(5,150,105,0.2)",
-            }}
-          >
-            <Text
-              className={`text-${isDark ? "emerald-400" : "emerald-700"} font-bold text-xs`}
-            >
-              {Math.round(caloriesRemaining)} left
-            </Text>
-          </View>
-        </View>
-
-        {/* Macro Circles */}
-        <View className="flex-1 flex-row justify-between">
-          {macros.map((macro) => (
-            <MacroCircle
-              key={macro.label}
-              {...macro}
-              isDark={isDark}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Compact Footer Stats */}
-      <View
-        className="flex-row justify-around py-3 px-4"
-        style={{
-          backgroundColor: isDark
-            ? "rgba(255,255,255,0.05)"
-            : "rgba(0,0,0,0.03)",
-        }}
-      >
-        {/* Steps */}
-        <View className="flex-row items-center">
-          <View
-            className="w-7 h-7 rounded-lg justify-center items-center mr-2"
-            style={{
-              backgroundColor: isDark
-                ? "rgba(16,185,129,0.2)"
-                : "rgba(5,150,105,0.2)",
-            }}
-          >
-            <Ionicons
-              name="walk"
-              size={14}
-              color={isDark ? "#10B981" : "#059669"}
-            />
-          </View>
-          <View>
-            <Text
-              className={`text-sm font-bold ${headerText}`}
-            >
-              {(todayStats.stepsCount / 1000).toFixed(1)}k
-            </Text>
-            <Text className={`text-xs ${subText}`}>
-              steps
-            </Text>
-          </View>
-        </View>
-
-        {/* Water */}
-        <View className="flex-row items-center">
-          <View
-            className="w-7 h-7 rounded-lg justify-center items-center mr-2"
-            style={{
-              backgroundColor: isDark
-                ? "rgba(59,130,246,0.2)"
-                : "rgba(29,78,216,0.2)",
-            }}
-          >
-            <Ionicons
-              name="water"
-              size={14}
-              color={isDark ? "#3B82F6" : "#1D4ED8"}
-            />
-          </View>
-          <View>
-            <Text
-              className={`text-sm font-bold ${headerText}`}
-            >
-              {(todayStats.waterConsumed / 1000).toFixed(1)}
-              L
-            </Text>
-            <Text className={`text-xs ${subText}`}>
-              water
-            </Text>
-          </View>
-        </View>
-
-        {/* Burned */}
-        <View className="flex-row items-center">
-          <View
-            className="w-7 h-7 rounded-lg justify-center items-center mr-2"
-            style={{
-              backgroundColor: isDark
-                ? "rgba(239,68,68,0.2)"
-                : "rgba(220,38,38,0.2)",
-            }}
-          >
-            <Ionicons
-              name="flame"
-              size={14}
-              color={isDark ? "#EF4444" : "#DC2626"}
-            />
-          </View>
-          <View>
-            <Text
-              className={`text-sm font-bold ${headerText}`}
-            >
-              {Math.round(todayStats.caloriesBurned)}
-            </Text>
-            <Text className={`text-xs ${subText}`}>
-              burned
-            </Text>
-          </View>
-        </View>
-      </View>
-    </View>
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
   );
 };

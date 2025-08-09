@@ -26,7 +26,7 @@ const MealSection = ({
   items,
   dateString,
 }: MealSectionProps) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const totalCalories = items.reduce(
     (sum, item) => sum + item.calories,
@@ -73,121 +73,96 @@ const MealSection = ({
     mealName.charAt(0).toUpperCase() + mealName.slice(1);
 
   return (
-    <View style={{ marginHorizontal: 0 }}>
+    <View className="mx-0">
       <View
+        className="rounded-2xl overflow-hidden"
         style={{
           backgroundColor: colors.surface,
-          borderRadius: 20,
           borderWidth: 1,
           borderColor: colors.border + "30",
-          overflow: "hidden",
-          shadowColor: colors.text.primary,
-          shadowOffset: {
-            width: 0,
-            height: 2,
-          },
-          shadowOpacity: 0.04,
-          shadowRadius: 8,
-          elevation: 3,
         }}
       >
-        {/* Enhanced Header */}
+        {/* Compact Header */}
         <View
+          className="px-4 py-3 flex-row items-center justify-between"
           style={{
-            backgroundColor: colors.surfaceElevated,
-            paddingHorizontal: 20,
-            paddingVertical: 16,
+            backgroundColor: colors.surface,
             borderBottomWidth: items.length > 0 ? 1 : 0,
             borderBottomColor: colors.border + "20",
           }}
         >
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: mealColor + "15",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Ionicons
-                  name={mealIcon}
-                  size={20}
-                  color={mealColor}
-                />
-              </View>
-              <View>
-                <Text
-                  style={{ color: colors.text.primary }}
-                  className="text-lg font-bold"
-                >
-                  {capitalizedMealName}
-                </Text>
-                <Text
-                  style={{ color: colors.text.secondary }}
-                  className="text-sm mt-1"
-                >
-                  {items.length}{" "}
-                  {items.length === 1 ? "item" : "items"}
-                </Text>
-              </View>
+          <View className="flex-row items-center">
+            <View
+              className="w-8 h-8 rounded-lg items-center justify-center mr-3"
+              style={{
+                backgroundColor: mealColor + "15",
+              }}
+            >
+              <Ionicons
+                name={mealIcon}
+                size={16}
+                color={mealColor}
+              />
             </View>
-            <View className="items-end">
+            <View>
               <Text
+                className="text-base font-bold"
                 style={{ color: colors.text.primary }}
-                className="text-xl font-bold"
               >
-                {Math.round(totalCalories)}
+                {capitalizedMealName}
               </Text>
               <Text
+                className="text-xs"
                 style={{ color: colors.text.secondary }}
-                className="text-sm font-medium"
               >
-                calories
+                {items.length}{" "}
+                {items.length === 1 ? "item" : "items"}
               </Text>
             </View>
           </View>
+          <View className="items-end">
+            <Text
+              className="text-lg font-bold"
+              style={{ color: colors.text.primary }}
+            >
+              {Math.round(totalCalories)}
+            </Text>
+            <Text
+              className="text-xs font-medium"
+              style={{ color: colors.text.secondary }}
+            >
+              calories
+            </Text>
+          </View>
         </View>
 
-        {/* Enhanced Food Items List */}
+        {/* Compact Food Items List */}
         {items.length > 0 && (
-          <View
-            style={{
-              paddingHorizontal: 20,
-              paddingVertical: 8,
-            }}
-          >
+          <View className="px-4 py-1">
             {items.map((item, index) => (
               <View
                 key={item.id}
+                className="flex-row justify-between items-center py-2"
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  paddingVertical: 12,
                   borderBottomWidth:
                     index < items.length - 1 ? 1 : 0,
-                  borderBottomColor: colors.border + "20",
+                  borderBottomColor: colors.border + "15",
                 }}
               >
                 <View className="flex-1">
                   <Text
+                    className="text-sm font-medium"
                     style={{ color: colors.text.primary }}
-                    className="text-base font-medium"
                     numberOfLines={1}
                   >
                     {item.name}
                   </Text>
                   {item.servings !== 1 && (
                     <Text
+                      className="text-xs"
                       style={{
                         color: colors.text.secondary,
                       }}
-                      className="text-sm mt-1"
                     >
                       {item.servings}{" "}
                       {item.servings === 1
@@ -196,16 +171,16 @@ const MealSection = ({
                     </Text>
                   )}
                 </View>
-                <View className="items-end ml-4">
+                <View className="items-end ml-3">
                   <Text
+                    className="text-sm font-semibold"
                     style={{ color: colors.text.primary }}
-                    className="text-base font-semibold"
                   >
                     {Math.round(item.calories)}
                   </Text>
                   <Text
-                    style={{ color: colors.text.secondary }}
                     className="text-xs"
+                    style={{ color: colors.text.secondary }}
                   >
                     cal
                   </Text>
@@ -215,13 +190,8 @@ const MealSection = ({
           </View>
         )}
 
-        {/* Enhanced Add Food Button */}
-        <View
-          style={{
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-          }}
-        >
+        {/* Compact Add Food Button */}
+        <View className="px-4 py-3">
           <Link
             href={{
               pathname: "/nutrition/search",
@@ -233,39 +203,37 @@ const MealSection = ({
             asChild
           >
             <Pressable
+              className="rounded-xl py-3 px-4 flex-row items-center justify-center"
               style={{
-                backgroundColor: "#059669" + "15",
-                borderRadius: 14,
-                paddingVertical: 14,
-                paddingHorizontal: 16,
-                borderWidth: 1.5,
-                borderColor: "#059669" + "30",
+                backgroundColor: isDark
+                  ? "#00D4AA" + "20"
+                  : "#059669" + "15",
+                borderWidth: 1,
+                borderColor: isDark
+                  ? "#00D4AA" + "40"
+                  : "#059669" + "30",
                 borderStyle: "dashed",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
               }}
             >
               <View
+                className="w-5 h-5 rounded-lg items-center justify-center mr-2"
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 12,
-                  backgroundColor: "#059669" + "20",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 8,
+                  backgroundColor: isDark
+                    ? "#00D4AA" + "30"
+                    : "#059669" + "20",
                 }}
               >
                 <Ionicons
                   name="add"
-                  size={16}
-                  color="#059669"
+                  size={14}
+                  color={isDark ? "#00D4AA" : "#059669"}
                 />
               </View>
               <Text
-                style={{ color: "#059669" }}
-                className="text-base font-semibold"
+                className="text-sm font-semibold"
+                style={{
+                  color: isDark ? "#00D4AA" : "#059669",
+                }}
               >
                 Add Food
               </Text>

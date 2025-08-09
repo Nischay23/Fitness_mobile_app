@@ -64,10 +64,12 @@ const MEAL_TYPES: MealTypeInfo[] = [
 export const FoodSearchScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  
+
   // Get route parameters
   const params = useLocalSearchParams();
-  const routeMealType = params.mealType as MealType | undefined;
+  const routeMealType = params.mealType as
+    | MealType
+    | undefined;
   const routeDate = params.date as string | undefined;
 
   // Remove dependency on router parameters to avoid navigation context issues
@@ -279,53 +281,6 @@ export const FoodSearchScreen: React.FC = () => {
   const cardBackgroundColor = isDark ? "#1f2937" : "white";
   const textColor = isDark ? "#f9fafb" : "#111827";
   const secondaryTextColor = isDark ? "#9ca3af" : "#6b7280";
-
-  // Show loading if database is not initialized
-  if (!isInitialized) {
-    return (
-      <View style={[styles.container, { backgroundColor }]}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={isDark ? "#1f2937" : "#059669"}
-          translucent={false}
-        />
-        <SafeAreaView style={styles.safeArea}>
-          <LinearGradient
-            colors={gradientColors}
-            style={styles.loadingContainer}
-          >
-            <View
-              style={[
-                styles.loadingCard,
-                { backgroundColor: cardBackgroundColor },
-              ]}
-            >
-              <ActivityIndicator
-                size="large"
-                color={isDark ? "#10b981" : "#059669"}
-              />
-              <Text
-                style={[
-                  styles.loadingText,
-                  { color: textColor },
-                ]}
-              >
-                Preparing food database...
-              </Text>
-              <Text
-                style={[
-                  styles.loadingSubtext,
-                  { color: secondaryTextColor },
-                ]}
-              >
-                This will only take a moment
-              </Text>
-            </View>
-          </LinearGradient>
-        </SafeAreaView>
-      </View>
-    );
-  }
 
   return (
     <View style={[styles.container, { backgroundColor }]}>

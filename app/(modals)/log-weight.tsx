@@ -1,104 +1,114 @@
-// app/(modals)/log-weight.tsx
-
 import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   TextInput,
-  Pressable,
-  Alert,
-  ActivityIndicator,
-  useColorScheme,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Modal,
+  TouchableOpacity,
   ScrollView,
+  SafeAreaView,
+  useColorScheme,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  KeyboardAvoidingView,
+  StatusBar,
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import {
   format,
+  subMonths,
+  addMonths,
   startOfMonth,
   endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-  isAfter,
-  isBefore,
-  addMonths,
-  subMonths,
   startOfWeek,
   endOfWeek,
+  eachDayOfInterval,
+  isAfter,
 } from "date-fns";
-import { Ionicons } from "@expo/vector-icons";
-
+import { COLORS } from "@/constants/theme";
 import { useAppStore } from "@/stores/appStore";
 import { logOrUpdateWeight } from "@/db/actions/progressActions";
-import { COLORS } from "@/constants/theme";
 
 const LogWeightScreen = React.memo(() => {
   const router = useRouter();
   const { currentUser } = useAppStore();
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
+  const isDark = colorScheme === "dark";
 
   const [weight, setWeight] = useState(
     currentUser?.currentWeightKg?.toString() || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date()
+  );
+  const [showDatePicker, setShowDatePicker] =
+    useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(
+    new Date()
+  );
 
   const handleSaveWeight = async () => {
     if (!currentUser) {
-      Alert.alert("Error", "No user is currently logged in.");
+      Alert.alert(
+        "Error",
+        "No user is currently logged in."
+      );
       return;
     }
     const weightValue = parseFloat(weight);
     if (!weight || isNaN(weightValue) || weightValue <= 0) {
-      Alert.alert("Invalid Input", "Please enter a valid, positive weight.");
+      Alert.alert(
+        "Invalid Input",
+        "Please enter a valid, positive weight."
+      );
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const todayString = format(selectedDate, "yyyy-MM-dd");
-      await logOrUpdateWeight(currentUser.id, weightValue, todayString);
-
+      const todayString = format(
+        selectedDate,
+        "yyyy-MM-dd"
+      );
+      await logOrUpdateWeight(
+        currentUser.id,
+        weightValue,
+        todayString
+      );
       router.back();
     } catch (error) {
       console.error("Failed to log weight:", error);
-      Alert.alert("Error", "Could not save your weight. Please try again.");
+      Alert.alert(
+        "Error",
+        "Could not save your weight. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
-  // Memoized callback to prevent re-renders on every keystroke
   const handleWeightChange = useCallback((text: string) => {
     setWeight(text);
   }, []);
 
-  // Calendar helper functions
   const handleDateSelect = (date: Date) => {
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+    today.setHours(23, 59, 59, 999);
 
     if (isAfter(date, today)) {
-      Alert.alert("Invalid Date", "You cannot log weight for future dates.");
+      Alert.alert(
+        "Invalid Date",
+        "You cannot log weight for future dates."
+      );
       return;
     }
 
     setSelectedDate(date);
     setShowDatePicker(false);
-    console.log(`📅 Selected date: ${format(date, "yyyy-MM-dd")}`);
   };
 
   const handlePreviousMonth = () => {
@@ -109,7 +119,6 @@ const LogWeightScreen = React.memo(() => {
     const nextMonth = addMonths(calendarMonth, 1);
     const today = new Date();
 
-    // Don't allow navigating to future months
     if (
       nextMonth.getFullYear() > today.getFullYear() ||
       (nextMonth.getFullYear() === today.getFullYear() &&
@@ -127,7 +136,10 @@ const LogWeightScreen = React.memo(() => {
     const startWeek = startOfWeek(start);
     const endWeek = endOfWeek(end);
 
-    return eachDayOfInterval({ start: startWeek, end: endWeek });
+    return eachDayOfInterval({
+      start: startWeek,
+      end: endWeek,
+    });
   };
 
   const isDateInCurrentMonth = (date: Date) => {
@@ -140,164 +152,234 @@ const LogWeightScreen = React.memo(() => {
     return isAfter(date, today);
   };
 
-  const openDatePicker = () => {
-    setCalendarMonth(selectedDate);
-    setShowDatePicker(true);
-  };
-
-  const handleYearSelect = (year: number) => {
-    const newDate = new Date(calendarMonth);
-    newDate.setFullYear(year);
-    setCalendarMonth(newDate);
-    setShowYearPicker(false);
-  };
-
-  const getAvailableYears = () => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    // Show years from 1950 to current year
-    for (let year = currentYear; year >= 1950; year--) {
-      years.push(year);
-    }
-    return years;
-  };
-
-  const toggleYearPicker = () => {
-    setShowYearPicker(!showYearPicker);
-  };
-
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <StatusBar barStyle="light-content" backgroundColor="black" />
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
+      />
 
-      {/* Custom Navigation Header */}
-      <View className="flex-row items-center justify-between px-5 py-4 bg-black border-b border-gray-800">
-        <Pressable onPress={handleBack} className="p-2 -ml-2">
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </Pressable>
-
-        <Text className="text-white text-lg font-semibold">Add Weight</Text>
-
-        <Pressable
-          onPress={handleSaveWeight}
-          disabled={isSubmitting}
-          className={`p-2 -mr-2 ${isSubmitting ? "opacity-50" : "opacity-100"}`}
+      {/* Header */}
+      <SafeAreaView
+        style={{ backgroundColor: colors.background }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
         >
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#10B981" />
-          ) : (
-            <Ionicons name="checkmark" size={24} color="#10B981" />
-          )}
-        </Pressable>
-      </View>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 12,
+              backgroundColor: colors.surface,
+            }}
+          >
+            <Ionicons
+              name="arrow-back"
+              size={20}
+              color={colors.text.primary}
+            />
+          </TouchableOpacity>
+
+          <Text
+            style={{
+              color: colors.text.primary,
+              fontSize: 20,
+              fontWeight: "bold",
+            }}
+          >
+            Add Weight
+          </Text>
+
+          <TouchableOpacity
+            onPress={handleSaveWeight}
+            disabled={isSubmitting || !weight}
+            style={{
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 12,
+              backgroundColor: weight
+                ? colors.primary
+                : colors.surface,
+              opacity: isSubmitting || !weight ? 0.5 : 1,
+            }}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator
+                size="small"
+                color="white"
+              />
+            ) : (
+              <Ionicons
+                name="checkmark"
+                size={20}
+                color={
+                  weight ? "white" : colors.text.secondary
+                }
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={
+          Platform.OS === "ios" ? "padding" : "height"
+        }
       >
-        <View className="flex-1 px-5 py-6">
-          {/* Weight Input Section */}
-          <View className="bg-gray-900 rounded-2xl p-5 mb-4 flex-row justify-between items-center border border-gray-800">
-            <Text className="text-white text-base font-medium">
-              Weight (kg)
-            </Text>
-
-            <View className="flex-row items-center">
+        <ScrollView
+          className="flex-1 p-4"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Weight Input */}
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <View className="flex-row items-center justify-between">
+              <Text
+                style={{
+                  color: colors.text.primary,
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
+              >
+                Weight (kg)
+              </Text>
               <TextInput
-                style={styles.weightInput}
-                placeholder="50"
-                placeholderTextColor="#6B7280"
+                placeholder="70.5"
+                placeholderTextColor={colors.text.secondary}
                 value={weight}
                 onChangeText={handleWeightChange}
                 keyboardType="decimal-pad"
                 autoFocus={true}
                 returnKeyType="done"
-                blurOnSubmit={true}
+                style={{
+                  color: colors.primary,
+                  fontSize: 16,
+                  fontWeight: "600",
+                  textAlign: "right",
+                  minWidth: 64,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                }}
                 maxLength={6}
                 selectTextOnFocus={true}
-                caretHidden={false}
                 editable={!isSubmitting}
-                allowFontScaling={false}
-                textContentType="none"
-                autoCorrect={false}
-                spellCheck={false}
               />
             </View>
           </View>
 
-          {/* Date Section */}
-          <Pressable
-            onPress={openDatePicker}
-            className="bg-gray-900 rounded-2xl p-5 mb-4 flex-row justify-between items-center border border-gray-800"
+          {/* Date Selection */}
+          <TouchableOpacity
+            onPress={() => {
+              setCalendarMonth(selectedDate);
+              setShowDatePicker(true);
+            }}
+            className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-xl p-4 mb-4 ${isDark ? "border-gray-700" : "border-gray-200"} border`}
           >
-            <Text className="text-white text-base font-medium">Date</Text>
-
-            <View className="flex-row items-center">
-              <Text className="text-emerald-400 text-base font-semibold mr-2">
-                {format(selectedDate, "d MMM yyyy")}
+            <View className="flex-row items-center justify-between">
+              <Text
+                className={`text-base font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+              >
+                Date
               </Text>
-              <Ionicons name="calendar-outline" size={20} color="#10B981" />
+              <View className="flex-row items-center">
+                <Text
+                  className={`text-base font-semibold mr-2 ${isDark ? "text-teal-400" : "text-teal-600"}`}
+                >
+                  {format(selectedDate, "d MMM yyyy")}
+                </Text>
+                <Ionicons
+                  name="calendar-outline"
+                  size={20}
+                  color={isDark ? "#00D4AA" : "#00B399"}
+                />
+              </View>
             </View>
-          </Pressable>
+          </TouchableOpacity>
 
-          {/* Progress Photo Section */}
-          <View className="bg-gray-900 rounded-2xl p-5 mb-6 flex-row justify-between items-center border border-gray-800">
-            <Text className="text-white text-base font-medium">
-              Progress Photo
-            </Text>
-
-            <Pressable
-              className="p-2"
-              onPress={() => {
-                Alert.alert(
-                  "Coming Soon",
-                  "Photo feature will be available soon!"
-                );
-              }}
-            >
-              <Ionicons name="camera-outline" size={24} color="#9CA3AF" />
-            </Pressable>
-          </View>
-
-          {/* Weight Tips Section */}
-          <View className="bg-gray-900 rounded-2xl p-5 border border-gray-800 mb-6">
+          {/* Tips Section */}
+          <View
+            className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-xl p-4 mb-4 ${isDark ? "border-gray-700" : "border-gray-200"} border`}
+          >
             <View className="flex-row items-center mb-3">
               <Ionicons
                 name="bulb-outline"
                 size={20}
-                color="#10B981"
-                className="mr-2"
+                color="#00D4AA"
               />
-              <Text className="text-emerald-400 text-sm font-semibold ml-2">
+              <Text className="text-teal-500 text-sm font-semibold ml-2">
                 Pro Tip
               </Text>
             </View>
-            <Text className="text-gray-400 text-sm leading-5">
-              For best results, weigh yourself at the same time each day,
-              preferably in the morning after using the bathroom.
+            <Text
+              className={`text-sm leading-5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+            >
+              For best results, weigh yourself at the same
+              time each day, preferably in the morning after
+              using the bathroom.
             </Text>
           </View>
 
-          {/* Spacer to push button to bottom */}
-          <View className="flex-1" />
-
           {/* Save Button */}
-          <Pressable
+          <TouchableOpacity
             onPress={handleSaveWeight}
             disabled={isSubmitting || !weight}
-            className={`bg-emerald-500 rounded-2xl py-4 items-center ${
-              isSubmitting || !weight ? "opacity-50" : "opacity-100"
+            className={`rounded-xl py-4 items-center mt-4 ${
+              isSubmitting || !weight
+                ? isDark
+                  ? "bg-gray-700"
+                  : "bg-gray-300"
+                : "bg-teal-500"
             }`}
           >
             {isSubmitting ? (
-              <ActivityIndicator size="small" color="white" />
+              <ActivityIndicator
+                size="small"
+                color="white"
+              />
             ) : (
-              <Text className="text-white text-base font-semibold">
+              <Text
+                className={`text-base font-semibold ${
+                  weight
+                    ? "text-white"
+                    : isDark
+                      ? "text-gray-400"
+                      : "text-gray-500"
+                }`}
+              >
                 Save Weight
               </Text>
             )}
-          </Pressable>
-        </View>
+          </TouchableOpacity>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Date Picker Modal */}
@@ -306,234 +388,143 @@ const LogWeightScreen = React.memo(() => {
         transparent={true}
         animationType="slide"
         onRequestClose={() => setShowDatePicker(false)}
-        statusBarTranslucent={true}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            justifyContent: "flex-end",
-          }}
-        >
+        <View className="flex-1 bg-black/50 justify-end">
           <View
-            style={{
-              backgroundColor: "#111827", // gray-900
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              padding: 24,
-              maxHeight: 500,
-              paddingTop: 32, // Add extra padding at top
-            }}
+            className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-t-3xl p-6 max-h-96`}
           >
             {/* Calendar Header */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 24,
-                paddingHorizontal: 8,
-              }}
-            >
-              <Pressable onPress={handlePreviousMonth} style={{ padding: 8 }}>
-                <Ionicons name="chevron-back" size={24} color="white" />
-              </Pressable>
+            <View className="flex-row items-center justify-between mb-6">
+              <TouchableOpacity
+                onPress={handlePreviousMonth}
+                className="p-2"
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={24}
+                  color={isDark ? "#D1D5DB" : "#6B7280"}
+                />
+              </TouchableOpacity>
 
-              <Pressable onPress={toggleYearPicker} style={{ padding: 8 }}>
-                <Text
-                  style={{ color: "white", fontSize: 18, fontWeight: "600" }}
-                >
-                  {format(calendarMonth, "MMMM yyyy")}
-                </Text>
-              </Pressable>
+              <Text
+                className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+              >
+                {format(calendarMonth, "MMMM yyyy")}
+              </Text>
 
-              <Pressable onPress={handleNextMonth} style={{ padding: 8 }}>
-                <Ionicons name="chevron-forward" size={24} color="white" />
-              </Pressable>
+              <TouchableOpacity
+                onPress={handleNextMonth}
+                className="p-2"
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={24}
+                  color={isDark ? "#D1D5DB" : "#6B7280"}
+                />
+              </TouchableOpacity>
             </View>
 
-            {/* Year Picker */}
-            {showYearPicker ? (
-              <View style={{ height: 200, marginBottom: 20 }}>
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  style={{ flex: 1 }}
-                  contentContainerStyle={{ paddingVertical: 20 }}
-                >
-                  {getAvailableYears().map((year) => {
-                    const isSelected = year === calendarMonth.getFullYear();
-                    return (
-                      <Pressable
-                        key={year}
-                        onPress={() => handleYearSelect(year)}
-                        style={{
-                          paddingVertical: 12,
-                          paddingHorizontal: 20,
-                          marginVertical: 2,
-                          borderRadius: 8,
-                          backgroundColor: isSelected
-                            ? "#10B981"
-                            : "transparent",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: isSelected ? "white" : "#D1D5DB",
-                            fontSize: 16,
-                            fontWeight: isSelected ? "600" : "400",
-                            textAlign: "center",
-                          }}
-                        >
-                          {year}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            ) : (
-              <>
-                {/* Days of Week */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    marginBottom: 12,
-                    paddingHorizontal: 4,
-                  }}
-                >
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                    (day) => (
+            {/* Calendar Grid */}
+            <View className="mb-4">
+              {/* Day Headers */}
+              <View className="flex-row mb-2">
+                {["S", "M", "T", "W", "T", "F", "S"].map(
+                  (day, index) => (
+                    <View
+                      key={index}
+                      className="flex-1 items-center py-2"
+                    >
                       <Text
-                        key={day}
-                        style={{
-                          color: "#9CA3AF",
-                          fontSize: 12,
-                          fontWeight: "500",
-                          width: 40,
-                          textAlign: "center",
-                        }}
+                        className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}
                       >
                         {day}
                       </Text>
-                    )
-                  )}
-                </View>
+                    </View>
+                  )
+                )}
+              </View>
 
-                {/* Calendar Grid */}
-                <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                  {getCalendarDays().map((date: Date, index: number) => {
-                    const isSelected = isSameDay(date, selectedDate);
-                    const isDisabled = isDateDisabled(date);
-                    const isToday = isSameDay(date, new Date());
-                    const isCurrentMonth = isDateInCurrentMonth(date);
+              {/* Calendar Days */}
+              <View className="flex-row flex-wrap">
+                {getCalendarDays().map((day, index) => {
+                  const isSelected =
+                    format(day, "yyyy-MM-dd") ===
+                    format(selectedDate, "yyyy-MM-dd");
+                  const isCurrentMonth =
+                    isDateInCurrentMonth(day);
+                  const isDisabled = isDateDisabled(day);
 
-                    return (
-                      <Pressable
-                        key={index}
-                        onPress={() =>
-                          !isDisabled &&
-                          isCurrentMonth &&
-                          handleDateSelect(date)
-                        }
-                        style={{
-                          width: 40,
-                          height: 40,
-                          justifyContent: "center",
-                          alignItems: "center",
-                          borderRadius: 8,
-                          margin: 4,
-                          backgroundColor: isSelected
-                            ? "#10B981"
-                            : isToday
-                              ? "#374151"
-                              : "transparent",
-                        }}
-                        disabled={isDisabled || !isCurrentMonth}
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() =>
+                        !isDisabled && handleDateSelect(day)
+                      }
+                      disabled={isDisabled}
+                      className={`w-1/7 aspect-square items-center justify-center m-0.5 rounded-lg ${
+                        isSelected
+                          ? "bg-teal-500"
+                          : isDisabled
+                            ? ""
+                            : isDark
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-100"
+                      }`}
+                      style={{ width: `${100 / 7}%` }}
+                    >
+                      <Text
+                        className={`text-sm ${
+                          isSelected
+                            ? "text-white font-semibold"
+                            : isDisabled
+                              ? isDark
+                                ? "text-gray-600"
+                                : "text-gray-400"
+                              : isCurrentMonth
+                                ? isDark
+                                  ? "text-white"
+                                  : "text-gray-900"
+                                : isDark
+                                  ? "text-gray-500"
+                                  : "text-gray-400"
+                        }`}
                       >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: "500",
-                            color: !isCurrentMonth
-                              ? "#4B5563"
-                              : isDisabled
-                                ? "#6B7280"
-                                : isSelected
-                                  ? "white"
-                                  : isToday
-                                    ? "#10B981"
-                                    : "white",
-                          }}
-                        >
-                          {date.getDate()}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </>
-            )}
+                        {format(day, "d")}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
 
-            {/* Calendar Footer */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                marginTop: 24,
-                paddingTop: 16,
-                borderTopWidth: 1,
-                borderTopColor: "#374151",
-              }}
-            >
-              <Pressable
+            {/* Modal Actions */}
+            <View className="flex-row justify-end pt-4 border-t border-gray-700">
+              <TouchableOpacity
                 onPress={() => setShowDatePicker(false)}
-                style={{
-                  paddingHorizontal: 24,
-                  paddingVertical: 12,
-                  marginRight: 12,
-                }}
+                className="px-6 py-2"
               >
                 <Text
-                  style={{ color: "#9CA3AF", fontSize: 16, fontWeight: "600" }}
+                  className={`font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
                 >
                   Cancel
                 </Text>
-              </Pressable>
-
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => setShowDatePicker(false)}
-                style={{
-                  paddingHorizontal: 24,
-                  paddingVertical: 12,
-                }}
+                className="px-6 py-2 ml-4"
               >
-                <Text
-                  style={{ color: "#10B981", fontSize: 16, fontWeight: "600" }}
-                >
+                <Text className="text-teal-500 font-medium">
                   Done
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 });
 
 LogWeightScreen.displayName = "LogWeightScreen";
-
-const styles = StyleSheet.create({
-  weightInput: {
-    color: "#10B981",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "right",
-    minWidth: 64,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-});
 
 export default LogWeightScreen;

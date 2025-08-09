@@ -1,36 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   RefreshControl,
   Text,
   TouchableOpacity,
   View,
   ScrollView,
+  StatusBar,
+  Platform,
+  Pressable,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Link } from "expo-router";
-
-import { format } from "date-fns/format";
-import { Q } from "@nozbe/watermelondb";
-import { database } from "@/db/index";
-import { DiaryEntry } from "@/db/models/DiaryEntry";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { HeroSection } from "@/modules/home/components/HeroSection";
 import { PlansBanner } from "@/modules/home/components/PlansBanner";
+import ProductsSection from "@/modules/products/components/ProductsSection";
+import { QuickLogModal } from "@/modules/nutrition";
 import { useTheme } from "@/modules/home/hooks/useTheme";
 import { useHomeStore } from "@/modules/home/store/homeStore";
-
-import { QuickLogModal } from "@/modules/nutrition";
 import { useAppStore } from "@/stores/appStore";
-import { Pressable } from "react-native";
-
 import { useProductsStore } from "@/modules/products/store/useProductsStore";
-import ProductsSection from "@/modules/products/components/ProductsSection";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image } from "react-native";
 
 export default function Index(): JSX.Element {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { refreshData } = useHomeStore();
   const [refreshing, setRefreshing] = useState(false);
   const [showQuickLogModal, setShowQuickLogModal] =
@@ -42,11 +38,12 @@ export default function Index(): JSX.Element {
   const { supabaseProfile } = useAppStore();
 
   // fetch products once
-
   const { fetchProducts } = useProductsStore();
+
+  // Simplified initialization - no complex animations
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   const onRefresh = async (): Promise<void> => {
     setRefreshing(true);
@@ -67,61 +64,78 @@ export default function Index(): JSX.Element {
     }
   };
 
-  // quick actions array
+  // quick actions array with enhanced styling
   const quickActions = [
     {
       icon: "restaurant",
       label: "Log Food",
       color: colors.primary,
+      gradient: ["#4ADE80", "#22C55E"] as const,
       onPress: () => router.push("/nutrition/search"),
     },
     {
       icon: "fitness",
       label: "Exercise",
       color: "#EC4899",
+      gradient: ["#EC4899", "#BE185D"] as const,
       onPress: () => setShowQuickLogModal(true),
     },
     {
       icon: "water",
       label: "Water",
       color: "#06B6D4",
+      gradient: ["#06B6D4", "#0891B2"] as const,
       onPress: () => setShowQuickLogModal(true),
     },
     {
       icon: "library-outline",
       label: "Blogs",
       color: "#F59E0B",
+      gradient: ["#F59E0B", "#D97706"] as const,
       onPress: () => router.push("/blogs"),
     },
   ];
 
   return (
     <View
-      className="flex-1"
-      style={{ backgroundColor: colors.background }}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
     >
-      {/* HEADER */}
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+
+      {/* HEADER with clean design */}
       <View
-        className="flex-row justify-between items-center px-6 py-4"
+        className="flex-row justify-between items-center px-5 pt-4 pb-0"
         style={{
-          paddingTop: insets.top + 10,
+          paddingTop: insets.top + 5,
+          paddingBottom: 5,
           backgroundColor: colors.background,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
         }}
       >
         <View>
           <Pressable onPress={handleTitlePress}>
             <Text
-              className="text-2xl font-bold"
-              style={{ color: colors.primary }}
+              className="text-3xl font-bold"
+              style={{
+                color: colors.text.primary,
+                fontFamily: "Inter_18pt-Bold",
+              }}
             >
               FitNext
             </Text>
           </Pressable>
           <Text
-            className="text-sm"
-            style={{ color: colors.text.secondary }}
+            className="text-sm "
+            style={{
+              color: colors.text.secondary,
+              fontFamily: "Inter_18pt-Regular",
+            }}
           >
             Your fitness journey
           </Text>
@@ -131,14 +145,16 @@ export default function Index(): JSX.Element {
           onPress={handleProfilePress}
           className="w-12 h-12 rounded-full overflow-hidden"
           style={{
-            backgroundColor: colors.surfaceElevated,
-            borderColor: colors.primary,
-            borderWidth: 1,
+            backgroundColor: colors.surface,
+            borderWidth: 2,
+            borderColor: colors.border,
           }}
         >
           {supabaseProfile?.avatar_url ? (
             <Image
-              source={{ uri: supabaseProfile.avatar_url }}
+              source={{
+                uri: supabaseProfile.avatar_url,
+              }}
               className="w-full h-full"
             />
           ) : (
@@ -148,7 +164,13 @@ export default function Index(): JSX.Element {
                 backgroundColor: colors.primary + "20",
               }}
             >
-              <Text style={{ color: colors.primary }}>
+              <Text
+                className="text-lg font-bold"
+                style={{
+                  color: colors.primary,
+                  fontFamily: "Inter_18pt-Bold",
+                }}
+              >
                 {currentUser?.name?.charAt(0) || "U"}
               </Text>
             </View>
@@ -158,92 +180,179 @@ export default function Index(): JSX.Element {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 60 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
             colors={[colors.primary]}
+            progressBackgroundColor={colors.surface}
           />
         }
       >
-        <HeroSection />
-        <PlansBanner />
+        <View style={{ height: 12 }} />
 
-        {/* QUICK ACTIONS */}
-        <View className="px-4 py-2">
-          <Text
-            className="text-lg font-semibold mb-3"
-            style={{ color: colors.text.primary }}
-          >
-            Quick Actions
-          </Text>
+        <View className="mx-2">
+          <HeroSection />
+        </View>
+
+        <View>
+          <PlansBanner />
+        </View>
+
+        {/* QUICK ACTIONS - Improved UI */}
+        <View className="px-5 py-6">
+          {/* Section Header */}
+          <View className="mb-5">
+            <Text
+              className="text-xl font-bold mb-1"
+              style={{
+                color: colors.text.primary,
+                fontFamily: "Inter_18pt-Bold",
+              }}
+            >
+              Quick Actions
+            </Text>
+            <Text
+              className="text-sm"
+              style={{
+                color: colors.text.secondary,
+                fontFamily: "Inter_18pt-Regular",
+              }}
+            >
+              Track your progress in one tap
+            </Text>
+          </View>
+
+          {/* Actions Grid */}
           <View className="flex-row justify-between">
-            {quickActions.map((action, index) =>
-              action.label === "Blogs" ? (
-                <Link key={index} href="/blogs" asChild>
-                  <TouchableOpacity
-                    className="items-center p-4 rounded-2xl flex-1 mx-1"
-                    style={{
+            {quickActions.map((action, index) => {
+              const ActionCard = (
+                <Pressable
+                  key={index}
+                  android_ripple={{
+                    color: action.color + "22",
+                    borderless: false,
+                  }}
+                  style={({ pressed }) => [
+                    {
                       backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 16,
+                      padding: 16,
+                      minHeight: 110,
+                      flex: 1,
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginHorizontal: 4,
+                      // Enhanced shadow
+                      ...Platform.select({
+                        ios: {
+                          shadowColor: action.color,
+                          shadowOpacity: 0.15,
+                          shadowOffset: {
+                            width: 0,
+                            height: 4,
+                          },
+                          shadowRadius: 12,
+                        },
+                        android: {
+                          elevation: 3,
+                        },
+                      }),
+                      // Press feedback
+                      transform: [
+                        { scale: pressed ? 0.96 : 1 },
+                      ],
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
+                  onPress={action.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={action.label}
+                >
+                  <View
+                    style={{
+                      alignItems: "center",
+                      flex: 1,
+                      justifyContent: "center",
                     }}
                   >
-                    <View
-                      className="w-12 h-12 rounded-full items-center justify-center mb-2"
+                    {/* Enhanced Gradient Icon Container */}
+                    <LinearGradient
+                      colors={action.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
                       style={{
-                        backgroundColor:
-                          action.color + "20",
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 12,
+                        // Add subtle inner shadow effect
+                        ...Platform.select({
+                          ios: {
+                            shadowColor: "#000",
+                            shadowOpacity: 0.1,
+                            shadowOffset: {
+                              width: 0,
+                              height: 2,
+                            },
+                            shadowRadius: 4,
+                          },
+                          android: {
+                            elevation: 2,
+                          },
+                        }),
                       }}
                     >
                       <Ionicons
                         name={action.icon as any}
                         size={24}
-                        color={action.color}
+                        color="#FFFFFF"
                       />
-                    </View>
+                    </LinearGradient>
+
+                    {/* Action Label */}
                     <Text
-                      className="text-sm font-medium text-center"
-                      style={{ color: colors.text.primary }}
+                      className="text-xs text-center font-semibold"
+                      style={{
+                        color: colors.text.primary,
+                        fontFamily: "Inter_18pt-SemiBold",
+                        lineHeight: 16,
+                      }}
+                      numberOfLines={2}
                     >
-                      Blogs
+                      {action.label}
                     </Text>
-                  </TouchableOpacity>
-                </Link>
-              ) : (
-                <TouchableOpacity
-                  key={index}
-                  onPress={action.onPress}
-                  className="items-center p-4 rounded-2xl flex-1 mx-1"
-                  style={{
-                    backgroundColor: colors.surface,
-                  }}
-                >
-                  <View
-                    className="w-12 h-12 rounded-full items-center justify-center mb-2"
-                    style={{
-                      backgroundColor: action.color + "20",
-                    }}
-                  >
-                    <Ionicons
-                      name={action.icon as any}
-                      size={24}
-                      color={action.color}
-                    />
                   </View>
-                  <Text
-                    className="text-sm font-medium text-center"
-                    style={{ color: colors.text.primary }}
+                </Pressable>
+              );
+
+              // Handle Blogs link specially
+              if (action.label === "Blogs") {
+                return (
+                  <Link
+                    href="/blogs"
+                    asChild
+                    key={`blogs-${index}`}
                   >
-                    {action.label}
-                  </Text>
-                </TouchableOpacity>
-              )
-            )}
+                    {ActionCard}
+                  </Link>
+                );
+              }
+
+              return ActionCard;
+            })}
           </View>
         </View>
 
-        <ProductsSection />
-        <View className="pb-20" />
+        <View className="px-4 py-3">
+          <ProductsSection />
+        </View>
       </ScrollView>
 
       <QuickLogModal

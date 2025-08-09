@@ -1,214 +1,278 @@
-// app/debug/db-debug.tsx
-
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  Pressable,
+  TouchableOpacity,
   FlatList,
   ScrollView,
   Alert,
+  ActivityIndicator,
+  useColorScheme,
+  SafeAreaView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { Q } from "@nozbe/watermelondb";
-
-// --- NEW: Direct DB import and our debug actions ---
+import { COLORS } from "@/constants/theme";
 import { database } from "@/db";
 import {
   getAllTableNames,
   clearTable,
   nukeDatabase,
 } from "../../db/actions/debugActions";
-import { ActivityIndicator } from "react-native";
 
 // Helper component to render each item in a readable format
-const RecordItem = ({
-  recordData,
-}: {
-  recordData: any;
-}) => (
-  <View className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-    <Text className="text-sm font-mono text-gray-800 dark:text-gray-200">
-      {JSON.stringify(recordData, null, 2)}
-    </Text>
-  </View>
-);
+const RecordItem = ({ recordData }: { recordData: any }) => {
+  const colorScheme = useColorScheme() ?? "light";
+  const isDark = colorScheme === "dark";
+  
+  return (
+    <View className={`mb-3 p-3 rounded-lg ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'} border`}>
+      <Text className={`text-xs font-mono leading-4 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+        {JSON.stringify(recordData, null, 2)}
+      </Text>
+    </View>
+  );
+};
 
 export default function DatabaseDebugScreen() {
   const router = useRouter();
-  const [selectedTable, setSelectedTable] = useState<
-    string | null
-  >(null);
+  const colorScheme = useColorScheme() ?? "light";
+  const colors = COLORS[colorScheme];
+  const isDark = colorScheme === "dark";
+  
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get table names directly from our debug action
-  const tableNames = useMemo(() => getAllTableNames(), []);
+  // Get table names
+  const tableNames = useMemo(() => {
+    return getAllTableNames();
+  }, []);
 
-  const fetchRecords = useCallback(
-    async (tableName: string) => {
-      setIsLoading(true);
-      setSelectedTable(tableName);
-      try {
-        const collection =
-          database.collections.get(tableName);
-        const allRecords = await collection
-          .query(Q.sortBy("updated_at", Q.desc))
-          .fetch();
-        const serializedRecords = allRecords.map(
-          (record) => record._raw
-        );
-        setRecords(serializedRecords);
-      } catch (error) {
-        console.error(
-          `Error fetching records for table ${tableName}:`,
-          error
-        );
-        setRecords([
-          {
-            error: `Could not fetch records for ${tableName}`,
-          },
-        ]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    []
-  );
+  const fetchTableData = useCallback(async (tableName: string) => {
+    setIsLoading(true);
+    setSelectedTable(tableName);
+    
+    try {
+      const collection = database.collections.get(tableName);
+      const allRecords = await collection.query().fetch();
+      
+      // Convert WatermelonDB records to plain objects for display
+      const plainRecords = allRecords.map((record: any) => {
+        const plainObj: any = {};
+        
+        // Get all the record's properties
+        for (const key in record._raw) {
+          plainObj[key] = record._raw[key];
+        }
+        
+        return plainObj;
+      });
+      
+      setRecords(plainRecords);
+    } catch (error) {
+      console.error(`Error fetching ${tableName}:`, error);
+      Alert.alert("Error", `Failed to fetch data from ${tableName}`);
+      setRecords([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const handleClearTable = () => {
-    if (!selectedTable) return;
+  const handleClearTable = useCallback(async (tableName: string) => {
     Alert.alert(
-      "Confirm Clear Table",
-      `Are you sure you want to delete all records from the '${selectedTable}' table?`,
+      "Clear Table",
+      `Are you sure you want to clear all data from "${tableName}"?`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Yes, Clear It",
+          text: "Clear",
           style: "destructive",
           onPress: async () => {
-            await clearTable(selectedTable);
-            fetchRecords(selectedTable); // Refresh the list after clearing
+            try {
+              await clearTable(tableName);
+              Alert.alert("Success", `Cleared table: ${tableName}`);
+              // Refresh the table data
+              await fetchTableData(tableName);
+            } catch (error) {
+              Alert.alert("Error", `Failed to clear table: ${tableName}`);
+            }
           },
         },
       ]
     );
-  };
+  }, [fetchTableData]);
 
-  const handleNukeDatabase = () => {
+  const handleNukeDatabase = useCallback(async () => {
     Alert.alert(
-      "Confirm NUKE Database",
-      "This will delete ALL data and cannot be undone. The app will likely need a restart.",
+      "⚠️ Nuclear Option",
+      "This will DELETE ALL DATA in the database. This action cannot be undone!",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "NUKE IT",
           style: "destructive",
           onPress: async () => {
-            await nukeDatabase();
-            Alert.alert(
-              "Success",
-              "Database has been reset.",
-              [{ text: "OK", onPress: () => router.back() }]
-            );
+            try {
+              await nukeDatabase();
+              Alert.alert("💥 Database Nuked", "All data has been deleted.");
+              setRecords([]);
+              setSelectedTable(null);
+            } catch (error) {
+              Alert.alert("Error", "Failed to nuke database");
+            }
           },
         },
       ]
     );
-  };
+  }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-black">
-      <Stack.Screen options={{ title: "DB Inspector" }} />
-      <View className="flex-1 p-4">
-        {/* Header */}
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-2xl font-bold text-gray-800 dark:text-white">
-            DB Inspector
-          </Text>
-          <Pressable
-            onPress={handleNukeDatabase}
-            className="bg-red-600 p-2 rounded-lg"
-          >
-            <Text className="text-white font-bold text-xs">
-              NUKE DB
-            </Text>
-          </Pressable>
-        </View>
+    <SafeAreaView className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <Stack.Screen options={{ headerShown: false }} />
 
-        {/* Table Selector */}
-        <View className="mb-4">
-          <Text className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            Tables
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
+      {/* Header */}
+      <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <View className="flex-row items-center justify-between px-4 py-3">
+          <View className="flex-row items-center">
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-8 h-8 items-center justify-center rounded-full mr-3"
+            >
+              <Ionicons 
+                name="arrow-back" 
+                size={20} 
+                color={isDark ? '#D1D5DB' : '#6B7280'} 
+              />
+            </TouchableOpacity>
+            <Text className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Database Debug
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleNukeDatabase}
+            className="px-3 py-1.5 bg-red-500 rounded-lg"
           >
-            {tableNames.map((name: string) => (
-              <Pressable
-                key={name}
-                onPress={() => fetchRecords(name)}
-                className={`py-2 px-4 mr-2 rounded-full border-2 ${
-                  selectedTable === name
-                    ? "bg-blue-500 border-blue-500"
-                    : "bg-gray-200 dark:bg-gray-700 border-transparent"
+            <Text className="text-white text-sm font-semibold">💥 NUKE</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View className="flex-1 flex-row">
+        {/* Left Sidebar - Table List */}
+        <View className={`w-1/3 ${isDark ? 'bg-gray-800' : 'bg-white'} border-r ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <View className="p-4 border-b border-gray-700">
+            <Text className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Tables ({tableNames.length})
+            </Text>
+          </View>
+          <ScrollView className="flex-1">
+            {tableNames.map((tableName) => (
+              <TouchableOpacity
+                key={tableName}
+                onPress={() => fetchTableData(tableName)}
+                className={`p-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'} ${
+                  selectedTable === tableName 
+                    ? (isDark ? 'bg-gray-700' : 'bg-gray-100') 
+                    : ''
                 }`}
               >
-                <Text
-                  className={`font-semibold ${selectedTable === name ? "text-white" : "text-gray-700 dark:text-gray-200"}`}
-                >
-                  {name}
-                </Text>
-              </Pressable>
+                <View className="flex-row items-center justify-between">
+                  <Text className={`text-sm ${
+                    selectedTable === tableName 
+                      ? (isDark ? 'text-teal-400' : 'text-teal-600') 
+                      : (isDark ? 'text-gray-300' : 'text-gray-700')
+                  }`}>
+                    {tableName}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleClearTable(tableName)}
+                    className="p-1"
+                  >
+                    <Ionicons 
+                      name="trash-outline" 
+                      size={14} 
+                      color="#EF4444" 
+                    />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
-        {/* Records Display */}
-        <View className="flex-1 mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+        {/* Right Content - Table Data */}
+        <View className="flex-1">
           {isLoading ? (
-            <ActivityIndicator size="large" />
-          ) : records.length > 0 && selectedTable ? (
-            <FlatList
-              data={records}
-              keyExtractor={(item, index) =>
-                item.id || `record-${index}`
-              }
-              renderItem={({ item }) => (
-                <RecordItem recordData={item} />
-              )}
-              ListHeaderComponent={
-                <View className="flex-row justify-between items-center mb-2">
-                  <Text className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    Records in{" "}
-                    <Text className="font-bold">
-                      {selectedTable}
-                    </Text>{" "}
-                    ({records.length})
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color="#00D4AA" />
+              <Text className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Loading {selectedTable}...
+              </Text>
+            </View>
+          ) : selectedTable ? (
+            <View className="flex-1">
+              {/* Table Header */}
+              <View className={`p-4 border-b ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+                <View className="flex-row items-center justify-between">
+                  <Text className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {selectedTable} ({records.length} records)
                   </Text>
-                  <Pressable
-                    onPress={handleClearTable}
-                    className="bg-yellow-600 p-2 rounded-lg"
+                  <TouchableOpacity
+                    onPress={() => fetchTableData(selectedTable)}
+                    className="p-2"
                   >
-                    <Text className="text-white font-bold text-xs">
-                      Clear Table
-                    </Text>
-                  </Pressable>
+                    <Ionicons 
+                      name="refresh" 
+                      size={16} 
+                      color={isDark ? '#9CA3AF' : '#6B7280'} 
+                    />
+                  </TouchableOpacity>
                 </View>
-              }
-            />
+              </View>
+
+              {/* Table Content */}
+              {records.length > 0 ? (
+                <FlatList
+                  data={records}
+                  keyExtractor={(item, index) => `${selectedTable}-${index}`}
+                  renderItem={({ item }) => <RecordItem recordData={item} />}
+                  className="flex-1 p-4"
+                  showsVerticalScrollIndicator={false}
+                />
+              ) : (
+                <View className="flex-1 items-center justify-center">
+                  <Ionicons 
+                    name="server-outline" 
+                    size={64} 
+                    color={isDark ? '#6B7280' : '#9CA3AF'} 
+                    className="mb-4"
+                  />
+                  <Text className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    No Records Found
+                  </Text>
+                  <Text className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    This table is empty
+                  </Text>
+                </View>
+              )}
+            </View>
           ) : (
-            <Text className="text-center text-gray-500 dark:text-gray-400 mt-8">
-              {selectedTable
-                ? `No records found in '${selectedTable}'.`
-                : "Select a table to view its records."}
-            </Text>
+            <View className="flex-1 items-center justify-center">
+              <Ionicons 
+                name="albums-outline" 
+                size={64} 
+                color={isDark ? '#6B7280' : '#9CA3AF'} 
+                className="mb-4"
+              />
+              <Text className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                Select a Table
+              </Text>
+              <Text className={`text-sm mt-1 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Choose a table from the left to view its data
+              </Text>
+            </View>
           )}
         </View>
       </View>

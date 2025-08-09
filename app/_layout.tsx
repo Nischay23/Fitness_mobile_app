@@ -35,9 +35,10 @@ export default function RootLayout() {
   const [isAppReady, setIsAppReady] = useState(false);
 
   const [fontsLoaded, fontError] = useFonts({
-    "Inter-Regular": require("../assets/fonts/Inter_18pt-Bold.ttf"),
+    "Inter-Regular": require("../assets/fonts/Inter_18pt-Regular.ttf"),
     "Inter-SemiBold": require("../assets/fonts/Inter_18pt-SemiBold.ttf"),
     "Inter-Bold": require("../assets/fonts/Inter_18pt-Bold.ttf"),
+    "Inter-Medium": require("../assets/fonts/Inter_18pt-SemiBold.ttf"), // Using SemiBold as Medium
   });
 
   const onLayoutRootView = useCallback(async () => {
@@ -128,7 +129,11 @@ export default function RootLayout() {
                 </View>
               )}
               {/* Global StatusBar from expo-status-bar */}
-              <StatusBar style="light" />
+              <StatusBar
+                style="auto"
+                backgroundColor="transparent"
+                translucent={true}
+              />
             </GestureHandlerRootView>
           </SafeAreaProvider>
         </AuthProvider>

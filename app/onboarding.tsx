@@ -9,7 +9,11 @@ import {
   Alert,
 } from "react-native";
 import PagerView from "react-native-pager-view";
-import { useRouter, Stack } from "expo-router";
+import {
+  useRouter,
+  Stack,
+  useLocalSearchParams,
+} from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useOnboardingStore } from "@/modules/onboarding/store";
 import { WelcomeScreen } from "@/modules/onboarding/components/screens/WelcomeScreen";
@@ -18,7 +22,11 @@ import { MetricsScreen } from "@/modules/onboarding/components/screens/MetricsSc
 import { ActivityLevelScreen } from "@/modules/onboarding/components/screens/ActivityLevelScreen";
 import { GoalScreen } from "@/modules/onboarding/components/screens/GoalScreen";
 import { useAppStore } from "@/stores/appStore";
-import { createUser } from "@/db/actions/userActions";
+import { useUserStore } from "@/stores/useUserStore";
+import {
+  createUser,
+  updateUser,
+} from "@/db/actions/userActions";
 import { supabase } from "@/lib/supabase";
 
 // A simple, reusable progress bar component
@@ -38,16 +46,22 @@ const OnboardingProgressBar = ({
 export default function OnboardingFlow() {
   const pagerRef = useRef<PagerView>(null);
   const router = useRouter();
+  const { edit } = useLocalSearchParams();
+  const isEditMode = edit === "true";
   const isDark = useColorScheme() === "dark";
   const [currentPage, setCurrentPage] = useState(0);
   const onboardingState = useOnboardingStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { setCurrentUser, setOnboardingComplete } =
-    useAppStore();
+  const {
+    currentUser,
+    setCurrentUser,
+    setOnboardingComplete,
+  } = useAppStore();
+  const { setUserData } = useUserStore();
   const [supabaseUser, setSupabaseUser] =
     useState<any>(null);
 
-  // Get current user on mount
+  // Get current user on mount and pre-populate if editing
   React.useEffect(() => {
     const getUser = async () => {
       const {
@@ -56,7 +70,21 @@ export default function OnboardingFlow() {
       setSupabaseUser(user);
     };
     getUser();
-  }, []);
+
+    // Pre-populate onboarding state if editing existing user
+    if (isEditMode && currentUser) {
+      onboardingState.setData({
+        gender: currentUser.gender as any,
+        age: currentUser.age,
+        heightCm: currentUser.heightCm,
+        currentWeightKg: currentUser.currentWeightKg,
+        activityLevel: currentUser.activityLevel as any,
+        goalType: currentUser.goalType as any,
+        targetWeightKg:
+          currentUser.goalWeightKg || undefined,
+      });
+    }
+  }, [isEditMode, currentUser]);
 
   const canProceed = () => {
     switch (currentPage) {
@@ -102,7 +130,7 @@ export default function OnboardingFlow() {
       goToPage(currentPage + 1);
     } else {
       // --- THIS IS THE "FINISH SETUP" LOGIC ---
-      if (!supabaseUser) {
+      if (!supabaseUser && !isEditMode) {
         Alert.alert(
           "Authentication Error",
           "Your session could not be found. Please log in again."
@@ -113,45 +141,92 @@ export default function OnboardingFlow() {
 
       setIsSubmitting(true);
       try {
-        // 1. Combine all data from Supabase and our onboarding "clipboard"
-        const finalProfileData = {
-          server_id: supabaseUser.id,
-          email: supabaseUser.email,
-          name:
-            supabaseUser.user_metadata?.full_name ||
-            "Fitness User",
-          gender: onboardingState.gender!,
-          dateOfBirth: new Date(
-            new Date().setFullYear(
-              new Date().getFullYear() - 25
-            )
-          )
-            .toISOString()
-            .split("T")[0], // Default age 25 for now
-          heightCm: onboardingState.heightCm!,
-          currentWeightKg: onboardingState.currentWeightKg!,
-          targetWeightKg:
-            onboardingState.targetWeightKg ||
-            onboardingState.currentWeightKg!, // Default to current weight if no target
-          activityLevel: onboardingState.activityLevel!,
-          goalType: onboardingState.goalType!,
-        };
+        if (isEditMode && currentUser) {
+          // Update existing user
+          const updates = {
+            gender: onboardingState.gender!,
+            age: onboardingState.age,
+            heightCm: onboardingState.heightCm!,
+            currentWeightKg:
+              onboardingState.currentWeightKg!,
+            activityLevel: onboardingState.activityLevel!,
+            goalType: onboardingState.goalType!,
+            targetWeightKg:
+              onboardingState.targetWeightKg ||
+              currentUser.goalWeightKg,
+          };
 
-        // 2. Call the database action to create the user record
-        const newUser = await createUser(finalProfileData);
-
-        if (newUser) {
-          // 3. Update the global app state to mark the user as fully set up
-
-          setCurrentUser(newUser);
-          setOnboardingComplete(true);
-
-          // Navigate to the main app
-          router.replace("/(tabs)");
-        } else {
-          throw new Error(
-            "Failed to create the user profile in the database."
+          console.log(
+            "🔄 Updating user with critical changes:",
+            updates
           );
+          const updatedUser = await updateUser(
+            currentUser,
+            updates
+          );
+
+          // Update both stores with the new user data
+          setCurrentUser(updatedUser);
+          setUserData(updatedUser);
+
+          console.log(
+            "✅ User updated successfully with new goals:",
+            {
+              dailyCalorieGoal:
+                updatedUser.dailyCalorieGoal,
+              proteinGoal_g: updatedUser.proteinGoal_g,
+              carbsGoal_g: updatedUser.carbsGoal_g,
+              fatGoal_g: updatedUser.fatGoal_g,
+            }
+          );
+
+          // Navigate back to profile with success
+          router.back();
+          Alert.alert(
+            "Success",
+            "Your profile has been updated successfully!"
+          );
+        } else {
+          // Create new user (original flow)
+          const finalProfileData = {
+            server_id: supabaseUser.id,
+            email: supabaseUser.email,
+            name:
+              supabaseUser.user_metadata?.full_name ||
+              "Fitness User",
+            gender: onboardingState.gender!,
+            dateOfBirth: new Date(
+              new Date().setFullYear(
+                new Date().getFullYear() - 25
+              )
+            )
+              .toISOString()
+              .split("T")[0], // Default age 25 for now
+            heightCm: onboardingState.heightCm!,
+            currentWeightKg:
+              onboardingState.currentWeightKg!,
+            targetWeightKg:
+              onboardingState.targetWeightKg ||
+              onboardingState.currentWeightKg!,
+            activityLevel: onboardingState.activityLevel!,
+            goalType: onboardingState.goalType!,
+          };
+
+          const newUser = await createUser(
+            finalProfileData
+          );
+
+          if (newUser) {
+            // Update both stores with the new user data
+            setCurrentUser(newUser);
+            setUserData(newUser);
+            setOnboardingComplete(true);
+            router.replace("/(tabs)");
+          } else {
+            throw new Error(
+              "Failed to create the user profile in the database."
+            );
+          }
         }
       } catch (error) {
         console.error(
@@ -160,9 +235,9 @@ export default function OnboardingFlow() {
         );
         Alert.alert(
           "Error",
-          "There was a problem saving your profile. Please try again."
+          `There was a problem ${isEditMode ? "updating" : "saving"} your profile. Please try again.`
         );
-        setIsSubmitting(false); // Only reset on error so user can retry
+        setIsSubmitting(false);
       }
     }
   };
@@ -236,7 +311,9 @@ export default function OnboardingFlow() {
         >
           <Text className="text-white text-center text-lg font-bold">
             {currentPage === totalPages - 1
-              ? "Finish Setup"
+              ? isEditMode
+                ? "Save Changes"
+                : "Finish Setup"
               : "Continue"}
           </Text>
         </Pressable>

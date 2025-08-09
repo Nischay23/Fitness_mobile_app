@@ -8,19 +8,20 @@ import {
   Text,
   FlatList,
   TextInput,
-  Pressable,
+  TouchableOpacity,
   ActivityIndicator,
   Alert,
   Image,
   useColorScheme,
-  StyleSheet,
   SafeAreaView,
+  StatusBar,
 } from "react-native";
 import {
   Stack,
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
 import { COLORS } from "@/constants/theme";
 
@@ -28,6 +29,7 @@ export default function CommentsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
+  const isDark = colorScheme === "dark";
 
   const { post_id, post_author_id } = useLocalSearchParams<{
     post_id: string;
@@ -46,7 +48,7 @@ export default function CommentsScreen() {
     try {
       const { data, error } = await supabase
         .from("comments")
-        .select(`*, author:profiles(*)`) // Join with profiles to get author info
+        .select(`*, author:profiles(*)`)
         .eq("post_id", post_id)
         .order("created_at", { ascending: true });
 
@@ -73,7 +75,6 @@ export default function CommentsScreen() {
         });
       if (error) throw error;
 
-      // Add the new comment to the top of the list instantly (Optimistic Update)
       setComments((currentComments) => [
         ...currentComments,
         createdComment,
@@ -87,25 +88,78 @@ export default function CommentsScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
     >
-      <Stack.Screen
-        options={{
-          title: "Comments",
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTintColor: colors.text.primary,
-          headerTitleStyle: { color: colors.text.primary },
-        }}
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
       />
 
+      {/* Header */}
+      <SafeAreaView
+        style={{ backgroundColor: colors.background }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{
+                width: 40,
+                height: 40,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 12,
+                backgroundColor: colors.surface,
+                marginRight: 12,
+              }}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={20}
+                color={colors.text.primary}
+              />
+            </TouchableOpacity>
+            <Text
+              style={{
+                color: colors.text.primary,
+                fontSize: 20,
+                fontWeight: "bold",
+              }}
+            >
+              Comments
+            </Text>
+          </View>
+        </View>
+      </SafeAreaView>
+
       {isLoading ? (
-        <View style={styles.loadingContainer}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <ActivityIndicator
             size="large"
             color={colors.primary}
@@ -115,31 +169,47 @@ export default function CommentsScreen() {
         <FlatList
           data={comments}
           keyExtractor={(item) => item.id}
-          style={styles.commentsList}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 16,
+          }}
           renderItem={({ item }) => (
-            <View style={styles.commentItem}>
+            <View
+              style={{
+                flexDirection: "row",
+                marginBottom: 16,
+              }}
+            >
               <Image
                 source={{
                   uri:
                     item.author?.avatar_url ||
-                    `https://ui-avatars.com/api/?name=${item.author?.username?.charAt(0) || "U"}`,
+                    `https://ui-avatars.com/api/?name=${item.author?.username?.charAt(0) || "U"}&background=${isDark ? "374151" : "E5E7EB"}&color=${isDark ? "F9FAFB" : "1F2937"}`,
                 }}
-                style={styles.commentAvatar}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                }}
               />
-              <View style={styles.commentContent}>
+              <View style={{ marginLeft: 12, flex: 1 }}>
                 <Text
-                  style={[
-                    styles.commentUsername,
-                    { color: colors.text.primary },
-                  ]}
+                  style={{
+                    color: colors.text.primary,
+                    fontWeight: "600",
+                    fontSize: 14,
+                    marginBottom: 4,
+                  }}
                 >
                   {item.author?.username || "Unknown"}
                 </Text>
                 <Text
-                  style={[
-                    styles.commentText,
-                    { color: colors.text.secondary },
-                  ]}
+                  style={{
+                    color: colors.text.primary,
+                    fontSize: 14,
+                    lineHeight: 20,
+                  }}
                 >
                   {item.content}
                 </Text>
@@ -147,12 +217,24 @@ export default function CommentsScreen() {
             </View>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: 64,
+              }}
+            >
+              <Ionicons
+                name="chatbubble-outline"
+                size={48}
+                color={colors.text.secondary}
+                style={{ marginBottom: 16 }}
+              />
               <Text
-                style={[
-                  styles.emptyText,
-                  { color: colors.text.muted },
-                ]}
+                style={{
+                  textAlign: "center",
+                  color: colors.text.secondary,
+                  fontSize: 16,
+                }}
               >
                 No comments yet. Be the first!
               </Text>
@@ -161,134 +243,75 @@ export default function CommentsScreen() {
         />
       )}
 
-      {/* Comment Input Box */}
+      {/* Comment Input */}
       <View
-        style={[
-          styles.inputContainer,
-          {
-            borderTopColor: colors.border,
-            backgroundColor: colors.background,
-          },
-        ]}
+        style={{
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        }}
       >
-        <TextInput
-          value={newComment}
-          onChangeText={setNewComment}
-          placeholder="Add a comment..."
-          placeholderTextColor={colors.text.muted}
-          style={[
-            styles.textInput,
-            {
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-end",
+          }}
+        >
+          <TextInput
+            value={newComment}
+            onChangeText={setNewComment}
+            placeholder="Add a comment..."
+            placeholderTextColor={colors.text.secondary}
+            style={{
+              flex: 1,
               backgroundColor: colors.surface,
+              borderRadius: 20,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              maxHeight: 96,
               color: colors.text.primary,
-            },
-          ]}
-          multiline
-        />
-        <Pressable
-          onPress={handleAddComment}
-          disabled={isPosting || !newComment.trim()}
-          style={[
-            styles.postButton,
-            {
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+            multiline
+            textAlignVertical="top"
+          />
+          <TouchableOpacity
+            onPress={handleAddComment}
+            disabled={isPosting || !newComment.trim()}
+            style={{
+              marginLeft: 12,
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 20,
               backgroundColor: newComment.trim()
                 ? colors.primary
                 : colors.surface,
-              opacity: isPosting ? 0.6 : 1,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.postButtonText,
-              {
-                color: newComment.trim()
-                  ? colors.text.inverse
-                  : colors.text.muted,
-              },
-            ]}
+            }}
           >
-            {isPosting ? "Posting..." : "Post"}
-          </Text>
-        </Pressable>
+            {isPosting ? (
+              <ActivityIndicator
+                size="small"
+                color="white"
+              />
+            ) : (
+              <Ionicons
+                name="send"
+                size={16}
+                color={
+                  newComment.trim()
+                    ? "white"
+                    : colors.text.secondary
+                }
+              />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  commentsList: {
-    flex: 1,
-  },
-  commentItem: {
-    flexDirection: "row",
-    padding: 16,
-    alignItems: "flex-start",
-  },
-  commentAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#333",
-  },
-  commentContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  commentUsername: {
-    fontWeight: "600",
-    fontSize: 15,
-    marginBottom: 2,
-  },
-  commentText: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 60,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: "center",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-  },
-  textInput: {
-    flex: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 16,
-    maxHeight: 100,
-    textAlignVertical: "top",
-  },
-  postButton: {
-    marginLeft: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 60,
-  },
-  postButtonText: {
-    fontWeight: "600",
-    fontSize: 16,
-  },
-});

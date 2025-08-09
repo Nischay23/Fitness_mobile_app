@@ -39,84 +39,54 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
     <TouchableOpacity
       onPress={onPress}
       disabled={isLoading}
+      className="bg-white border border-gray-200 rounded-xl p-3 mb-2"
       style={{
         backgroundColor,
         borderColor,
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 8,
+        transform: [{ scale: isLoading ? 0.98 : 1 }],
         shadowColor: isDark ? "#000" : "#000",
         shadowOffset: {
           width: 0,
-          height: 2,
+          height: 1,
         },
-        shadowOpacity: isDark ? 0.3 : 0.06,
-        shadowRadius: 3,
-        elevation: 2,
-        transform: [{ scale: isLoading ? 0.98 : 1 }],
+        shadowOpacity: isDark ? 0.2 : 0.04,
+        shadowRadius: 2,
+        elevation: 1,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        {/* Food Icon */}
+      <View className="flex-row items-center">
+        {/* Compact Food Icon */}
         <View
+          className="w-10 h-10 rounded-lg items-center justify-center mr-3"
           style={{
-            width: 48,
-            height: 48,
             backgroundColor: iconBackgroundColor,
-            borderRadius: 12,
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 16,
           }}
         >
           <Ionicons
             name="restaurant-outline"
-            size={20}
+            size={16}
             color={primaryColor}
           />
         </View>
 
         {/* Food Info */}
-        <View style={{ flex: 1, marginRight: 12 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginBottom: 4,
-            }}
-          >
+        <View className="flex-1 mr-3">
+          <View className="flex-row items-center mb-1">
             <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-                color: textColor,
-                flex: 1,
-              }}
+              className="text-sm font-semibold flex-1"
+              style={{ color: textColor }}
               numberOfLines={1}
             >
               {food.name}
             </Text>
             {food.isVerified && (
               <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  backgroundColor: primaryColor,
-                  borderRadius: 8,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginLeft: 8,
-                }}
+                className="w-4 h-4 rounded-full items-center justify-center ml-2"
+                style={{ backgroundColor: primaryColor }}
               >
                 <Ionicons
                   name="checkmark"
-                  size={10}
+                  size={8}
                   color="white"
                 />
               </View>
@@ -125,38 +95,26 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
 
           {food.brand && (
             <Text
-              style={{
-                fontSize: 14,
-                color: secondaryTextColor,
-                marginBottom: 8,
-              }}
+              className="text-xs mb-2"
+              style={{ color: secondaryTextColor }}
               numberOfLines={1}
             >
               {food.brand}
             </Text>
           )}
 
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
+          <View className="flex-row items-center">
             <View
+              className="px-2 py-1 rounded-md mr-2"
               style={{
                 backgroundColor: isDark
                   ? "#f59e0b20"
                   : "#fed7aa",
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 8,
-                marginRight: 8,
               }}
             >
               <Text
+                className="text-xs font-semibold"
                 style={{
-                  fontSize: 12,
-                  fontWeight: "600",
                   color: isDark ? "#f59e0b" : "#ea580c",
                 }}
               >
@@ -164,93 +122,47 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
               </Text>
             </View>
             <Text
-              style={{
-                fontSize: 12,
-                color: secondaryTextColor,
-                fontWeight: "500",
-              }}
+              className="text-xs font-medium"
+              style={{ color: secondaryTextColor }}
             >
               per {food.servingSize} {food.servingUnit}
             </Text>
           </View>
 
-          {/* Macro Information */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 8,
-              gap: 12,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+          {/* Compact Macro Information */}
+          <View className="flex-row items-center mt-2 gap-3">
+            <View className="flex-row items-center">
               <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  backgroundColor: "#3b82f6",
-                  borderRadius: 4,
-                  marginRight: 4,
-                }}
+                className="w-2 h-2 rounded-full mr-1"
+                style={{ backgroundColor: "#3b82f6" }}
               />
               <Text
-                style={{
-                  fontSize: 12,
-                  color: secondaryTextColor,
-                }}
+                className="text-xs"
+                style={{ color: secondaryTextColor }}
               >
                 P: {food.macros.protein}g
               </Text>
             </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View className="flex-row items-center">
               <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  backgroundColor: "#10b981",
-                  borderRadius: 4,
-                  marginRight: 4,
-                }}
+                className="w-2 h-2 rounded-full mr-1"
+                style={{ backgroundColor: "#10b981" }}
               />
               <Text
-                style={{
-                  fontSize: 12,
-                  color: secondaryTextColor,
-                }}
+                className="text-xs"
+                style={{ color: secondaryTextColor }}
               >
                 C: {food.macros.carbs}g
               </Text>
             </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View className="flex-row items-center">
               <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  backgroundColor: "#f59e0b",
-                  borderRadius: 4,
-                  marginRight: 4,
-                }}
+                className="w-2 h-2 rounded-full mr-1"
+                style={{ backgroundColor: "#f59e0b" }}
               />
               <Text
-                style={{
-                  fontSize: 12,
-                  color: secondaryTextColor,
-                }}
+                className="text-xs"
+                style={{ color: secondaryTextColor }}
               >
                 F: {food.macros.fat}g
               </Text>
@@ -258,26 +170,14 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
           </View>
         </View>
 
-        {/* Add Button */}
+        {/* Compact Add Button */}
         {showAddButton && (
           <TouchableOpacity
             onPress={onPress}
             disabled={isLoading}
+            className="w-8 h-8 rounded-lg items-center justify-center"
             style={{
-              width: 40,
-              height: 40,
-              alignItems: "center",
-              justifyContent: "center",
               backgroundColor: primaryColor,
-              borderRadius: 12,
-              shadowColor: primaryColor,
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.2,
-              shadowRadius: 3,
-              elevation: 3,
             }}
           >
             {isLoading ? (
@@ -288,7 +188,7 @@ export const FoodItemCard: React.FC<FoodItemCardProps> = ({
             ) : (
               <Ionicons
                 name="add"
-                size={18}
+                size={14}
                 color="white"
               />
             )}

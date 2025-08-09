@@ -1,16 +1,23 @@
 import { database } from "@/db";
-import { User, UserProfileData } from "@/db/models/User";
+import {
+  User,
+  UserProfileData,
+  ActivityLevel,
+  GoalType,
+} from "@/db/models/User";
 import { Q } from "@nozbe/watermelondb";
 import { calculateUserGoals } from "@/modules/onboarding/services/goalCalculator";
 // Get the users collection from the database
 const users = database.collections.get<User>("users");
+const usersCollection =
+  database.collections.get<User>("users");
 
 interface UserCreationData {
   server_id: string;
   email?: string;
   name: string;
   avatar_url?: string;
-  gender: "male" | "female" | "other";
+  gender: "male" | "female" | "other" | string;
   dateOfBirth: string;
   heightCm: number;
   currentWeightKg: number;
@@ -75,6 +82,74 @@ export async function getActiveUser(): Promise<User | null> {
   }
 }
 
+export const updateUserAndRecalculateGoals = async (
+  userId: string,
+  updates: Partial<UserProfileData>
+): Promise<User> => {
+  return await database.write(async () => {
+    const userToUpdate = await usersCollection.find(userId);
+
+    const currentProfile: UserProfileData = {
+      server_id: userToUpdate.serverId,
+      email: userToUpdate.email,
+      name: userToUpdate.name,
+      avatar_url: userToUpdate.avatarUrl,
+      gender: userToUpdate.gender,
+      dateOfBirth: userToUpdate.dateOfBirth,
+      heightCm: userToUpdate.heightCm,
+      currentWeightKg: userToUpdate.currentWeightKg,
+      goalType: userToUpdate.goalType,
+      activityLevel: userToUpdate.activityLevel,
+      targetWeightKg: userToUpdate.goalWeightKg,
+      goalRateKgPerWeek: userToUpdate.goalRateKgPerWeek,
+    };
+
+    const newProfileData = {
+      ...currentProfile,
+      ...updates,
+    };
+    const recalculatedGoals =
+      calculateUserGoals(newProfileData);
+
+    await userToUpdate.update((user) => {
+      // Update the raw profile data
+      if (updates.name !== undefined)
+        user.name = updates.name;
+      if (updates.email !== undefined)
+        user.email = updates.email;
+      if (updates.avatar_url !== undefined)
+        user.avatarUrl = updates.avatar_url;
+      if (updates.gender !== undefined)
+        user.gender = updates.gender;
+      if (updates.dateOfBirth !== undefined)
+        user.dateOfBirth = updates.dateOfBirth;
+      if (updates.heightCm !== undefined)
+        user.heightCm = updates.heightCm;
+      if (updates.currentWeightKg !== undefined)
+        user.currentWeightKg = updates.currentWeightKg;
+      if (updates.goalType !== undefined)
+        user.goalType = updates.goalType;
+      if (updates.activityLevel !== undefined)
+        user.activityLevel = updates.activityLevel;
+      if (updates.targetWeightKg !== undefined)
+        user.goalWeightKg = updates.targetWeightKg;
+      if (updates.goalRateKgPerWeek !== undefined)
+        user.goalRateKgPerWeek = updates.goalRateKgPerWeek;
+
+      // Update the calculated goals
+      user.tdee = recalculatedGoals.tdee;
+      user.dailyCalorieGoal =
+        recalculatedGoals.dailyCalorieGoal;
+      user.proteinGoal_g = recalculatedGoals.proteinGoal_g;
+      user.carbsGoal_g = recalculatedGoals.carbsGoal_g;
+      user.fatGoal_g = recalculatedGoals.fatGoal_g;
+      user.fiberGoal_g = recalculatedGoals.fiberGoal_g;
+    });
+
+    return userToUpdate;
+  });
+};
+
 // Create a new user
 export const createUser = async (
   profile: UserProfileData
@@ -113,7 +188,7 @@ export const createUser = async (
   });
 };
 
-// Update user data
+// Update user data with goal recalculation
 export async function updateUser(
   user: User,
   updates: Partial<{
@@ -124,15 +199,69 @@ export async function updateUser(
     currentWeightKg: number;
     activityLevel: string;
     goalType: string;
+    targetWeightKg: number;
+    goalRateKgPerWeek: number;
   }>
 ): Promise<User> {
   try {
-    await database.write(async () => {
-      await user.update((user) => {
-        Object.assign(user, updates);
+    // Check if any update affects goal calculations
+    const criticalFields = [
+      "heightCm",
+      "currentWeightKg",
+      "activityLevel",
+      "goalType",
+      "targetWeightKg",
+      "goalRateKgPerWeek",
+      "gender",
+      "dateOfBirth",
+    ];
+    const needsGoalRecalculation = Object.keys(
+      updates
+    ).some((key) => criticalFields.includes(key));
+
+    if (needsGoalRecalculation) {
+      // Use the goal recalculation function for critical updates
+      const userProfileUpdates: Partial<UserProfileData> =
+        {};
+
+      if (updates.name !== undefined)
+        userProfileUpdates.name = updates.name;
+      if (updates.gender !== undefined)
+        userProfileUpdates.gender = updates.gender;
+      if (updates.dateOfBirth !== undefined)
+        userProfileUpdates.dateOfBirth =
+          updates.dateOfBirth;
+      if (updates.heightCm !== undefined)
+        userProfileUpdates.heightCm = updates.heightCm;
+      if (updates.currentWeightKg !== undefined)
+        userProfileUpdates.currentWeightKg =
+          updates.currentWeightKg;
+      if (updates.activityLevel !== undefined)
+        userProfileUpdates.activityLevel =
+          updates.activityLevel as ActivityLevel;
+      if (updates.goalType !== undefined)
+        userProfileUpdates.goalType =
+          updates.goalType as GoalType;
+      if (updates.targetWeightKg !== undefined)
+        userProfileUpdates.targetWeightKg =
+          updates.targetWeightKg;
+      if (updates.goalRateKgPerWeek !== undefined)
+        userProfileUpdates.goalRateKgPerWeek =
+          updates.goalRateKgPerWeek;
+
+      return await updateUserAndRecalculateGoals(
+        user.id,
+        userProfileUpdates
+      );
+    } else {
+      // For non-critical updates, use simple update
+      await database.write(async () => {
+        await user.update((user) => {
+          Object.assign(user, updates);
+        });
       });
-    });
-    return user;
+      return user;
+    }
   } catch (error) {
     console.error("Error updating user:", error);
     throw error;

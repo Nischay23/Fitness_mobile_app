@@ -7,26 +7,43 @@ import {
 } from "react-native";
 import React from "react";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useProductsStore } from "../store/useProductsStore";
 import ProductCard from "./ProductCard";
 import { useTheme } from "@/modules/home/hooks/useTheme";
 
 const ProductsSection = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const products = useProductsStore(
     (state) => state.products
   );
 
   if (!products.length) {
     return (
-      <View className="mt-8 flex-1 items-center justify-center">
+      <View
+        style={{
+          marginTop: 32,
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: isDark
+            ? "rgba(30, 41, 59, 0.5)"
+            : "rgba(255, 255, 255, 0.8)",
+          marginHorizontal: 16,
+          borderRadius: 20,
+          padding: 32,
+        }}
+      >
         <ActivityIndicator
           size="large"
           color={colors.primary}
         />
         <Text
-          className="mt-2"
-          style={{ color: colors.text.secondary }}
+          style={{
+            marginTop: 8,
+            color: colors.text.secondary,
+            fontFamily: "Inter_18pt-Regular",
+          }}
         >
           Loading products...
         </Text>
@@ -35,25 +52,57 @@ const ProductsSection = () => {
   }
 
   return (
-    <View className="mt-8">
-      {/* Header Section */}
-      <View className="mb-6 flex-row items-center justify-between px-4">
-        <View className="flex-1">
-          <Text
-            className="text-2xl font-bold"
-            style={{ color: colors.text.primary }}
-          >
-            Exclusive Store
-          </Text>
-          <Text
-            className="mt-1 text-base"
-            style={{ color: colors.text.secondary }}
-          >
-            Premium gear & supplements for your fitness
-            journey
-          </Text>
-        </View>
-      </View>
+    <View style={{ marginTop: 24 }}>
+      <LinearGradient
+        colors={
+          isDark
+            ? [
+                "rgba(30, 41, 59, 0.8)",
+                "rgba(15, 23, 42, 0.6)",
+              ]
+            : [
+                "rgba(255, 255, 255, 0.9)",
+                "rgba(248, 250, 252, 0.8)",
+              ]
+        }
+        style={{
+          marginHorizontal: 16,
+          borderRadius: 24,
+          padding: 20,
+          marginBottom: 20,
+          shadowColor: isDark ? colors.primary : "#000",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: isDark ? 0.3 : 0.1,
+          shadowRadius: 16,
+          elevation: isDark ? 12 : 6,
+          borderWidth: isDark ? 1.5 : 1,
+          borderColor: isDark
+            ? "rgba(74, 222, 128, 0.2)"
+            : "rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: "Inter_18pt-Bold",
+            color: colors.text.primary,
+            letterSpacing: -0.5,
+          }}
+        >
+          Exclusive Store
+        </Text>
+        <Text
+          style={{
+            marginTop: 6,
+            fontSize: 15,
+            fontFamily: "Inter_18pt-Regular",
+            color: colors.text.secondary,
+            lineHeight: 22,
+          }}
+        >
+          Premium gear & supplements for your fitness journey
+        </Text>
+      </LinearGradient>
 
       {/* Products List */}
       <FlatList
@@ -69,24 +118,53 @@ const ProductsSection = () => {
           paddingVertical: 8,
         }}
         ItemSeparatorComponent={() => (
-          <View className="w-2" />
+          <View style={{ width: 12 }} />
         )}
       />
 
-      {/* Bottom Info */}
-      <View className="mt-6 mb-4 flex-row items-center justify-center px-4">
+      <LinearGradient
+        colors={
+          isDark
+            ? [
+                "rgba(30, 41, 59, 0.6)",
+                "rgba(15, 23, 42, 0.4)",
+              ]
+            : [
+                "rgba(255, 255, 255, 0.8)",
+                "rgba(248, 250, 252, 0.6)",
+              ]
+        }
+        style={{
+          marginTop: 20,
+          marginBottom: 16,
+          marginHorizontal: 16,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+          borderRadius: 20,
+          borderWidth: isDark ? 1 : 0.5,
+          borderColor: isDark
+            ? "rgba(74, 222, 128, 0.1)"
+            : "rgba(0, 0, 0, 0.05)",
+        }}
+      >
         <Feather
           name="shield"
-          size={16}
+          size={18}
           color={colors.primary}
         />
         <Text
-          className="ml-2 text-sm"
-          style={{ color: colors.text.secondary }}
+          style={{
+            marginLeft: 8,
+            fontSize: 13,
+            fontFamily: "Inter_18pt-SemiBold",
+            color: colors.text.secondary,
+          }}
         >
           All products come with our satisfaction guarantee
         </Text>
-      </View>
+      </LinearGradient>
     </View>
   );
 };

@@ -5,6 +5,11 @@ import { User } from "@/db/models/User";
 interface UserProfile {
   name?: string;
   age?: number | null;
+  heightCm?: number;
+  currentWeightKg?: number;
+  gender?: string;
+  activityLevel?: string;
+  goalType?: string;
   // ... add other profile fields as needed
 }
 
@@ -13,6 +18,8 @@ interface UserGoals {
   proteinGoal_g?: number;
   carbsGoal_g?: number;
   fatGoal_g?: number;
+  fiberGoal_g?: number;
+  tdee?: number;
 }
 
 interface UserState {
@@ -29,12 +36,19 @@ export const useUserStore = create<UserState>((set) => ({
       profile: {
         name: user.name,
         age: user.age,
+        heightCm: user.heightCm,
+        currentWeightKg: user.currentWeightKg,
+        gender: user.gender,
+        activityLevel: user.activityLevel,
+        goalType: user.goalType,
       },
       goals: {
         dailyCalorieGoal: user.dailyCalorieGoal,
         proteinGoal_g: user.proteinGoal_g,
         carbsGoal_g: user.carbsGoal_g,
         fatGoal_g: user.fatGoal_g,
+        fiberGoal_g: user.fiberGoal_g,
+        tdee: user.tdee,
       },
     });
   },

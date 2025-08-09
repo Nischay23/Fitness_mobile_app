@@ -19,7 +19,7 @@ export type ActivityLevel =
   | "moderately_active"
   | "very_active";
 export type GoalType = "lose" | "maintain" | "gain";
-export type Gender = "male" | "female" | "other";
+export type Gender = "male" | "female" | "other" | string;
 
 // This is our new single source of truth for the user profile shape
 export interface UserProfileData {
@@ -71,9 +71,6 @@ export class User extends Model {
   @children("diary_entries") diaryEntries!: DiaryEntry[];
   @children("weight_entries") weightEntries!: WeightEntry[];
 
-  // --- Computed Properties (Getters) ---
-  // These are not stored in the database. They are calculated live whenever you access them.
-  // This is perfect for things like age.
   get age(): number | null {
     if (!this.dateOfBirth) {
       return null;

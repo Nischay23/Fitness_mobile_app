@@ -450,55 +450,43 @@ export const PlansBanner: React.FC = () => {
   return (
     <View
       style={{
-        marginVertical: 5,
+        marginVertical: 20,
       }}
     >
-      {/* Header */}
       <View
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
-          paddingHorizontal: 16,
-          marginBottom: 5,
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+          marginBottom: 12,
+          marginHorizontal: 16,
+          borderRadius: 20,
           backgroundColor: isDark
-            ? "rgba(0,0,0,0.2)"
-            : "rgba(255,255,255,0.5)",
-          backdropFilter: "blur(8px)",
-          padding: 8,
-          borderRadius: 16,
-          marginHorizontal: 8,
+            ? "rgba(30, 41, 59, 0.6)"
+            : "rgba(255, 255, 255, 0.8)",
+          shadowColor: isDark ? colors.primary : "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.2 : 0.08,
+          shadowRadius: 12,
+          elevation: isDark ? 8 : 4,
+          borderWidth: 1,
+          borderColor: isDark
+            ? "rgba(74, 222, 128, 0.2)"
+            : "rgba(0, 0, 0, 0.05)",
         }}
       >
         <Text
           style={{
-            fontSize: 18,
-            fontWeight: "700",
-            color: isDark ? "#FFFFFF" : colors.text.primary,
+            fontSize: 22,
+            fontFamily: "Inter_18pt-SemiBold",
+            color: isDark ? "#F8FAFC" : colors.text.primary,
+            letterSpacing: -0.3,
           }}
         >
           Your Journey
         </Text>
-        <TouchableOpacity
-          style={{
-            backgroundColor: isDark
-              ? "rgba(255,255,255,0.1)"
-              : "rgba(0,0,0,0.05)",
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 20,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 14,
-              color: isDark ? "#CBD5E1" : colors.primary,
-              fontWeight: "600",
-            }}
-          >
-            View All
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* Horizontal Scroll Cards */}

@@ -7,6 +7,7 @@ interface CalculatedGoals {
   proteinGoal_g: number;
   carbsGoal_g: number;
   fatGoal_g: number;
+  fiberGoal_g: number;
 }
 
 // This is a PURE function. It has no dependencies on WatermelonDB or `this`.
@@ -66,6 +67,7 @@ export const calculateUserGoals = (
   const fatGoal_g = Math.round(
     (dailyCalorieGoal * 0.3) / 9
   );
+  const fiberGoal_g = profile.gender === "male" ? 38 : 25;
 
   const result = {
     tdee: Math.round(tdee),
@@ -73,6 +75,7 @@ export const calculateUserGoals = (
     proteinGoal_g,
     carbsGoal_g,
     fatGoal_g,
+    fiberGoal_g,
   };
 
   console.log("✅ Goals calculated:", result);

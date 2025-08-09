@@ -66,14 +66,17 @@ const ProgressScreen = () => {
     React.useState<GraphPeriod>("all");
   const [showPeriodModal, setShowPeriodModal] =
     React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   // Subscribe to weight history changes
   React.useEffect(() => {
     if (!currentUser) {
       setWeightHistory([]);
+      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
     const subscription = database.collections
       .get<WeightEntry>("weight_entries")
       .query(
@@ -88,6 +91,7 @@ const ProgressScreen = () => {
           "entries"
         );
         setWeightHistory(entries);
+        setIsLoading(false);
       });
 
     return () => subscription.unsubscribe();
@@ -188,46 +192,53 @@ const ProgressScreen = () => {
         }}
       />
 
-      {/* Custom Navigation Header */}
-      <View
+      {/* Custom Navigation Header with proper safe area */}
+      <SafeAreaView
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 20,
-          paddingVertical: 8,
-          paddingTop: 16,
           backgroundColor: colors.background,
         }}
       >
-        <Pressable onPress={handleBackPress}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text.primary}
-          />
-        </Pressable>
-
-        <Text
+        <View
           style={{
-            color: colors.text.primary,
-            fontSize: 18,
-            fontWeight: "600",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
           }}
         >
-          Progress
-        </Text>
-
-        <Link href="/(modals)/log-weight" asChild>
-          <Pressable>
+          <Pressable onPress={handleBackPress}>
             <Ionicons
-              name="add"
-              size={28}
+              name="arrow-back"
+              size={24}
               color={colors.text.primary}
             />
           </Pressable>
-        </Link>
-      </View>
+
+          <Text
+            style={{
+              color: colors.text.primary,
+              fontSize: 20,
+              fontWeight: "bold",
+            }}
+          >
+            Progress
+          </Text>
+
+          <Link href="/(modals)/log-weight" asChild>
+            <Pressable>
+              <Ionicons
+                name="add"
+                size={28}
+                color={colors.text.primary}
+              />
+            </Pressable>
+          </Link>
+        </View>
+      </SafeAreaView>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -311,10 +322,51 @@ const ProgressScreen = () => {
             paddingVertical: 20,
           }}
         >
-          <WeightChart
-            entries={filteredWeightHistory}
-            period={selectedPeriod}
-          />
+          {isLoading ? (
+            // Loading animation for chart
+            <View
+              style={{
+                height: 250,
+                paddingHorizontal: 20,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{
+                  width: "100%",
+                  height: 200,
+                  backgroundColor: colors.surface,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Ionicons
+                  name="trending-up"
+                  size={48}
+                  color={colors.text.secondary}
+                  style={{ opacity: 0.5, marginBottom: 16 }}
+                />
+                <Text
+                  style={{
+                    color: colors.text.secondary,
+                    fontSize: 16,
+                    fontWeight: "500",
+                  }}
+                >
+                  Loading your progress...
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <WeightChart
+              entries={filteredWeightHistory}
+              period={selectedPeriod}
+            />
+          )}
         </View>
 
         {/* Entries Section */}

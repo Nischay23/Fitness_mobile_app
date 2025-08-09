@@ -8,13 +8,16 @@ import {
   ViewStyle,
   Animated,
   Easing,
-  Platform,
+  Platform, // Add this import
 } from "react-native";
 import Svg, {
   Circle,
   Defs,
   LinearGradient,
   Stop,
+  Filter,
+  FeDropShadow,
+  FeGaussianBlur,
 } from "react-native-svg";
 
 interface ProgressRingProps {
@@ -33,7 +36,7 @@ export const ProgressRing = ({
   strokeWidth,
   backgroundColor,
   progressColor,
-  glowEffect = true,
+  glowEffect = false,
   isDark = true,
 }: ProgressRingProps) => {
   const radius = (size - strokeWidth) / 2;
