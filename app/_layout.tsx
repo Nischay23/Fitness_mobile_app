@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { ToastProvider } from "@/providers/ToastProvider";
 
 import { useAppStore } from "@/stores/appStore";
 import {
@@ -74,68 +75,70 @@ export default function RootLayout() {
     <ErrorBoundary>
       <DatabaseProvider>
         <AuthProvider>
-          <SafeAreaProvider>
-            <GestureHandlerRootView
-              style={{ flex: 1, backgroundColor: "black" }}
-              onLayout={onLayoutRootView}
-            >
-              {/* Main SafeAreaView for the entire app content */}
+          <ToastProvider>
+            <SafeAreaProvider>
+              <GestureHandlerRootView
+                style={{ flex: 1, backgroundColor: "black" }}
+                onLayout={onLayoutRootView}
+              >
+                {/* Main SafeAreaView for the entire app content */}
 
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(auth)/login" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="(modals)"
-                  options={{ presentation: "modal" }}
-                />
-                <Stack.Screen name="nutrition/index" />
-                <Stack.Screen name="nutrition/search" />
-                <Stack.Screen name="products/[id]" />
-                <Stack.Screen name="user" />
-
-                <Stack.Screen
-                  name="blogs"
-                  options={{
-                    contentStyle: { paddingTop: 0 },
-                    animation: "fade", // Smoother transition
-                    presentation: "card",
-                  }}
-                />
-              </Stack>
-
-              {/* Loading overlay - position it absolutely over everything */}
-              {showLoading && (
-                <View className="absolute inset-0 bg-black flex-1 justify-center items-center">
-                  <ActivityIndicator
-                    size="large"
-                    color="#10B981"
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(auth)/login" />
+                  <Stack.Screen name="onboarding" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="(modals)"
+                    options={{ presentation: "modal" }}
                   />
-                  <Text className="text-white mt-4 text-center px-4">
-                    {fontError
-                      ? "Font loading failed, continuing..."
-                      : !fontsLoaded
-                        ? "Loading fonts..."
-                        : !isNavigatorReady
-                          ? "Setting up navigation..."
-                          : "Starting FitNext..."}
-                  </Text>
-                  {fontError && (
-                    <Text className="text-red-400 mt-2 text-sm">
-                      Font Error: {fontError.message}
+                  <Stack.Screen name="nutrition/index" />
+                  <Stack.Screen name="nutrition/search" />
+                  <Stack.Screen name="products/[id]" />
+                  <Stack.Screen name="user" />
+
+                  <Stack.Screen
+                    name="blogs"
+                    options={{
+                      contentStyle: { paddingTop: 0 },
+                      animation: "fade", // Smoother transition
+                      presentation: "card",
+                    }}
+                  />
+                </Stack>
+
+                {/* Loading overlay - position it absolutely over everything */}
+                {showLoading && (
+                  <View className="absolute inset-0 bg-black flex-1 justify-center items-center">
+                    <ActivityIndicator
+                      size="large"
+                      color="#10B981"
+                    />
+                    <Text className="text-white mt-4 text-center px-4">
+                      {fontError
+                        ? "Font loading failed, continuing..."
+                        : !fontsLoaded
+                          ? "Loading fonts..."
+                          : !isNavigatorReady
+                            ? "Setting up navigation..."
+                            : "Starting FitNext..."}
                     </Text>
-                  )}
-                </View>
-              )}
-              {/* Global StatusBar from expo-status-bar */}
-              <StatusBar
-                style="auto"
-                backgroundColor="transparent"
-                translucent={true}
-              />
-            </GestureHandlerRootView>
-          </SafeAreaProvider>
+                    {fontError && (
+                      <Text className="text-red-400 mt-2 text-sm">
+                        Font Error: {fontError.message}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                {/* Global StatusBar from expo-status-bar */}
+                <StatusBar
+                  style="auto"
+                  backgroundColor="transparent"
+                  translucent={true}
+                />
+              </GestureHandlerRootView>
+            </SafeAreaProvider>
+          </ToastProvider>
         </AuthProvider>
       </DatabaseProvider>
     </ErrorBoundary>

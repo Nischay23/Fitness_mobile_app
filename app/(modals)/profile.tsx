@@ -11,10 +11,12 @@ import {
   Platform,
   useColorScheme,
   StyleSheet,
+  StatusBar,
 } from "react-native";
 import { useAppStore } from "@/stores/appStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // Add this import
 import { signout } from "@/db/actions/authActions";
 import { updateUser } from "@/db/actions/userActions";
 
@@ -29,6 +31,7 @@ export default function Profile() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets(); // Add this hook
 
   if (!currentUser) return <Loader />;
 
@@ -97,10 +100,15 @@ export default function Profile() {
       alignItems: "center",
       paddingHorizontal: 24,
       paddingVertical: 16,
-      paddingTop: Platform.OS === "ios" ? 60 : 24,
+      paddingTop: insets.top + 16, // Use safe area insets instead of hardcoded value
       backgroundColor: colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+      shadowColor: isDark ? "#000" : "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDark ? 0.25 : 0.06,
+      shadowRadius: 8,
+      elevation: 4,
     },
     headerTitle: {
       fontSize: 24,
@@ -372,6 +380,12 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+
       {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>

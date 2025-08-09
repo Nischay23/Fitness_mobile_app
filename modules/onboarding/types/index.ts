@@ -16,7 +16,7 @@ export interface MetricInputProps {
   value: string;
   onChangeText: (text: string) => void;
   unit: string;
-  keyboardType?: "numeric";
+  keyboardType?: "numeric" | "decimal-pad" | "number-pad";
 }
 
 export type GoalType = "lose" | "maintain" | "gain";

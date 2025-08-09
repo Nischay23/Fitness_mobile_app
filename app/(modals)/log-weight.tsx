@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   format,
   subMonths,
@@ -37,6 +38,7 @@ const LogWeightScreen = React.memo(() => {
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
   const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets();
 
   const [weight, setWeight] = useState(
     currentUser?.currentWeightKg?.toString() || ""
@@ -161,12 +163,16 @@ const LogWeightScreen = React.memo(() => {
     >
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={colors.background}
+        backgroundColor="transparent"
+        translucent={true}
       />
 
-      {/* Header */}
-      <SafeAreaView
-        style={{ backgroundColor: colors.background }}
+      {/* Header with proper safe area handling */}
+      <View
+        style={{
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+        }}
       >
         <View
           style={{
@@ -239,16 +245,16 @@ const LogWeightScreen = React.memo(() => {
             )}
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
 
       <KeyboardAvoidingView
-        className="flex-1"
+        style={{ flex: 1 }}
         behavior={
           Platform.OS === "ios" ? "padding" : "height"
         }
       >
         <ScrollView
-          className="flex-1 p-4"
+          style={{ flex: 1, padding: 16 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Weight Input */}
@@ -262,7 +268,13 @@ const LogWeightScreen = React.memo(() => {
               borderColor: colors.border,
             }}
           >
-            <View className="flex-row items-center justify-between">
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Text
                 style={{
                   color: colors.text.primary,
@@ -302,24 +314,51 @@ const LogWeightScreen = React.memo(() => {
               setCalendarMonth(selectedDate);
               setShowDatePicker(true);
             }}
-            className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-xl p-4 mb-4 ${isDark ? "border-gray-700" : "border-gray-200"} border`}
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
           >
-            <View className="flex-row items-center justify-between">
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Text
-                className={`text-base font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                style={{
+                  color: colors.text.primary,
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
               >
                 Date
               </Text>
-              <View className="flex-row items-center">
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
                 <Text
-                  className={`text-base font-semibold mr-2 ${isDark ? "text-teal-400" : "text-teal-600"}`}
+                  style={{
+                    color: colors.primary,
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginRight: 8,
+                  }}
                 >
                   {format(selectedDate, "d MMM yyyy")}
                 </Text>
                 <Ionicons
                   name="calendar-outline"
                   size={20}
-                  color={isDark ? "#00D4AA" : "#00B399"}
+                  color={colors.primary}
                 />
               </View>
             </View>
@@ -327,20 +366,44 @@ const LogWeightScreen = React.memo(() => {
 
           {/* Tips Section */}
           <View
-            className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-xl p-4 mb-4 ${isDark ? "border-gray-700" : "border-gray-200"} border`}
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
           >
-            <View className="flex-row items-center mb-3">
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
               <Ionicons
                 name="bulb-outline"
                 size={20}
-                color="#00D4AA"
+                color={colors.primary}
               />
-              <Text className="text-teal-500 text-sm font-semibold ml-2">
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 14,
+                  fontWeight: "600",
+                  marginLeft: 8,
+                }}
+              >
                 Pro Tip
               </Text>
             </View>
             <Text
-              className={`text-sm leading-5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+              style={{
+                color: colors.text.secondary,
+                fontSize: 14,
+                lineHeight: 20,
+              }}
             >
               For best results, weigh yourself at the same
               time each day, preferably in the morning after
@@ -352,13 +415,17 @@ const LogWeightScreen = React.memo(() => {
           <TouchableOpacity
             onPress={handleSaveWeight}
             disabled={isSubmitting || !weight}
-            className={`rounded-xl py-4 items-center mt-4 ${
-              isSubmitting || !weight
-                ? isDark
-                  ? "bg-gray-700"
-                  : "bg-gray-300"
-                : "bg-teal-500"
-            }`}
+            style={{
+              backgroundColor:
+                isSubmitting || !weight
+                  ? colors.surface
+                  : colors.primary,
+              borderRadius: 16,
+              paddingVertical: 16,
+              alignItems: "center",
+              marginTop: 16,
+              opacity: isSubmitting || !weight ? 0.5 : 1,
+            }}
           >
             {isSubmitting ? (
               <ActivityIndicator
@@ -367,13 +434,13 @@ const LogWeightScreen = React.memo(() => {
               />
             ) : (
               <Text
-                className={`text-base font-semibold ${
-                  weight
-                    ? "text-white"
-                    : isDark
-                      ? "text-gray-400"
-                      : "text-gray-500"
-                }`}
+                style={{
+                  color: weight
+                    ? "white"
+                    : colors.text.secondary,
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
               >
                 Save Weight
               </Text>
@@ -389,53 +456,89 @@ const LogWeightScreen = React.memo(() => {
         animationType="slide"
         onRequestClose={() => setShowDatePicker(false)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
           <View
-            className={`${isDark ? "bg-gray-800" : "bg-white"} rounded-t-3xl p-6 max-h-96`}
+            style={{
+              backgroundColor: colors.surface,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 24,
+              maxHeight: 400,
+            }}
           >
             {/* Calendar Header */}
-            <View className="flex-row items-center justify-between mb-6">
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 24,
+              }}
+            >
               <TouchableOpacity
                 onPress={handlePreviousMonth}
-                className="p-2"
+                style={{ padding: 8 }}
               >
                 <Ionicons
                   name="chevron-back"
                   size={24}
-                  color={isDark ? "#D1D5DB" : "#6B7280"}
+                  color={colors.text.secondary}
                 />
               </TouchableOpacity>
 
               <Text
-                className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                style={{
+                  color: colors.text.primary,
+                  fontSize: 18,
+                  fontWeight: "600",
+                }}
               >
                 {format(calendarMonth, "MMMM yyyy")}
               </Text>
 
               <TouchableOpacity
                 onPress={handleNextMonth}
-                className="p-2"
+                style={{ padding: 8 }}
               >
                 <Ionicons
                   name="chevron-forward"
                   size={24}
-                  color={isDark ? "#D1D5DB" : "#6B7280"}
+                  color={colors.text.secondary}
                 />
               </TouchableOpacity>
             </View>
 
             {/* Calendar Grid */}
-            <View className="mb-4">
+            <View style={{ marginBottom: 16 }}>
               {/* Day Headers */}
-              <View className="flex-row mb-2">
+              <View
+                style={{
+                  flexDirection: "row",
+                  marginBottom: 8,
+                }}
+              >
                 {["S", "M", "T", "W", "T", "F", "S"].map(
                   (day, index) => (
                     <View
                       key={index}
-                      className="flex-1 items-center py-2"
+                      style={{
+                        flex: 1,
+                        alignItems: "center",
+                        paddingVertical: 8,
+                      }}
                     >
                       <Text
-                        className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                        style={{
+                          color: colors.text.secondary,
+                          fontSize: 12,
+                          fontWeight: "500",
+                        }}
                       >
                         {day}
                       </Text>
@@ -445,7 +548,12 @@ const LogWeightScreen = React.memo(() => {
               </View>
 
               {/* Calendar Days */}
-              <View className="flex-row flex-wrap">
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                }}
+              >
                 {getCalendarDays().map((day, index) => {
                   const isSelected =
                     format(day, "yyyy-MM-dd") ===
@@ -461,33 +569,32 @@ const LogWeightScreen = React.memo(() => {
                         !isDisabled && handleDateSelect(day)
                       }
                       disabled={isDisabled}
-                      className={`w-1/7 aspect-square items-center justify-center m-0.5 rounded-lg ${
-                        isSelected
-                          ? "bg-teal-500"
-                          : isDisabled
-                            ? ""
-                            : isDark
-                              ? "hover:bg-gray-700"
-                              : "hover:bg-gray-100"
-                      }`}
-                      style={{ width: `${100 / 7}%` }}
+                      style={{
+                        width: `${100 / 7}%`,
+                        aspectRatio: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 2,
+                        borderRadius: 8,
+                        backgroundColor: isSelected
+                          ? colors.primary
+                          : "transparent",
+                      }}
                     >
                       <Text
-                        className={`text-sm ${
-                          isSelected
-                            ? "text-white font-semibold"
+                        style={{
+                          fontSize: 14,
+                          color: isSelected
+                            ? "white"
                             : isDisabled
-                              ? isDark
-                                ? "text-gray-600"
-                                : "text-gray-400"
+                              ? colors.text.muted
                               : isCurrentMonth
-                                ? isDark
-                                  ? "text-white"
-                                  : "text-gray-900"
-                                : isDark
-                                  ? "text-gray-500"
-                                  : "text-gray-400"
-                        }`}
+                                ? colors.text.primary
+                                : colors.text.secondary,
+                          fontWeight: isSelected
+                            ? "600"
+                            : "400",
+                        }}
                       >
                         {format(day, "d")}
                       </Text>
@@ -498,22 +605,47 @@ const LogWeightScreen = React.memo(() => {
             </View>
 
             {/* Modal Actions */}
-            <View className="flex-row justify-end pt-4 border-t border-gray-700">
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                paddingTop: 16,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setShowDatePicker(false)}
-                className="px-6 py-2"
+                style={{
+                  paddingHorizontal: 24,
+                  paddingVertical: 8,
+                }}
               >
                 <Text
-                  className={`font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                  style={{
+                    color: colors.text.secondary,
+                    fontSize: 16,
+                    fontWeight: "500",
+                  }}
                 >
                   Cancel
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setShowDatePicker(false)}
-                className="px-6 py-2 ml-4"
+                style={{
+                  paddingHorizontal: 24,
+                  paddingVertical: 8,
+                  marginLeft: 16,
+                }}
               >
-                <Text className="text-teal-500 font-medium">
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontSize: 16,
+                    fontWeight: "500",
+                  }}
+                >
                   Done
                 </Text>
               </TouchableOpacity>

@@ -28,6 +28,7 @@ import {
   updateUser,
 } from "@/db/actions/userActions";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/providers/ToastProvider";
 
 // A simple, reusable progress bar component
 const OnboardingProgressBar = ({
@@ -35,10 +36,10 @@ const OnboardingProgressBar = ({
 }: {
   progress: number;
 }) => (
-  <View className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-6">
+  <View className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
     <View
       style={{ width: `${progress * 100}%` }}
-      className="h-1.5 bg-green-500 rounded-full"
+      className="h-2 bg-green-500 rounded-full"
     />
   </View>
 );
@@ -60,6 +61,7 @@ export default function OnboardingFlow() {
   const { setUserData } = useUserStore();
   const [supabaseUser, setSupabaseUser] =
     useState<any>(null);
+  const { showToast } = useToast();
 
   // Get current user on mount and pre-populate if editing
   React.useEffect(() => {
@@ -94,6 +96,8 @@ export default function OnboardingFlow() {
         return onboardingState.gender !== null;
       case 2: // Metrics
         return (
+          onboardingState.age !== null &&
+          onboardingState.age > 0 &&
           onboardingState.heightCm !== null &&
           onboardingState.heightCm > 0 &&
           onboardingState.currentWeightKg !== null &&
@@ -154,11 +158,27 @@ export default function OnboardingFlow() {
             targetWeightKg:
               onboardingState.targetWeightKg ||
               currentUser.goalWeightKg,
+            // Calculate dateOfBirth from age
+            dateOfBirth: onboardingState.age 
+              ? new Date(
+                  new Date().setFullYear(
+                    new Date().getFullYear() - onboardingState.age
+                  )
+                )
+                  .toISOString()
+                  .split("T")[0]
+              : currentUser.dateOfBirth,
           };
 
           console.log(
             "🔄 Updating user with critical changes:",
             updates
+          );
+          console.log(
+            "📅 Age being set:",
+            onboardingState.age,
+            "-> Date of birth:",
+            updates.dateOfBirth
           );
           const updatedUser = await updateUser(
             currentUser,
@@ -182,10 +202,7 @@ export default function OnboardingFlow() {
 
           // Navigate back to profile with success
           router.back();
-          Alert.alert(
-            "Success",
-            "Your profile has been updated successfully!"
-          );
+          showToast("Your profile has been updated successfully!", "success");
         } else {
           // Create new user (original flow)
           const finalProfileData = {
@@ -195,13 +212,21 @@ export default function OnboardingFlow() {
               supabaseUser.user_metadata?.full_name ||
               "Fitness User",
             gender: onboardingState.gender!,
-            dateOfBirth: new Date(
-              new Date().setFullYear(
-                new Date().getFullYear() - 25
-              )
-            )
-              .toISOString()
-              .split("T")[0], // Default age 25 for now
+            dateOfBirth: onboardingState.age 
+              ? new Date(
+                  new Date().setFullYear(
+                    new Date().getFullYear() - onboardingState.age
+                  )
+                )
+                  .toISOString()
+                  .split("T")[0]
+              : new Date(
+                  new Date().setFullYear(
+                    new Date().getFullYear() - 25
+                  )
+                )
+                  .toISOString()
+                  .split("T")[0], // Fallback to age 25 if no age provided
             heightCm: onboardingState.heightCm!,
             currentWeightKg:
               onboardingState.currentWeightKg!,
@@ -263,27 +288,27 @@ export default function OnboardingFlow() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Shared Header with Back Button and Progress Bar */}
-      <View className="my-4 flex-row items-center h-10">
+      <View className="mt-8 mb-6 flex-row items-center h-12">
         {currentPage > 0 ? (
           <Pressable
             onPress={handleBack}
-            className="absolute left-4 z-10 p-2"
+            className="absolute left-6 z-10 p-3 bg-gray-100 dark:bg-slate-800 rounded-full"
           >
             <Feather
               name="arrow-left"
-              size={24}
+              size={28}
               color={isDark ? "white" : "black"}
             />
           </Pressable>
         ) : (
-          <View className="w-12 h-10" />
+          <View className="w-16 h-12" />
         )}
-        <View className="flex-1">
+        <View className="flex-1 px-16">
           <OnboardingProgressBar
             progress={(currentPage + 1) / totalPages}
           />
         </View>
-        <View className="w-12 h-10" />
+        <View className="w-16 h-12" />
       </View>
 
       <PagerView
@@ -303,18 +328,21 @@ export default function OnboardingFlow() {
       </PagerView>
 
       {/* Shared Footer with "Continue" Button */}
-      <View className="px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+      <View className="px-6 py-6 border-t border-gray-200 dark:border-gray-800">
         <Pressable
           onPress={handleNext}
-          disabled={!canProceed()}
-          className="bg-green-500 rounded-full p-4 active:bg-green-600"
+          disabled={!canProceed() || isSubmitting}
+          className={`rounded-2xl p-5 ${!canProceed() || isSubmitting ? "bg-gray-300 dark:bg-gray-700" : "bg-green-500 active:bg-green-600"}`}
         >
-          <Text className="text-white text-center text-lg font-bold">
-            {currentPage === totalPages - 1
-              ? isEditMode
-                ? "Save Changes"
-                : "Finish Setup"
-              : "Continue"}
+          <Text className={`text-center text-xl font-bold ${!canProceed() || isSubmitting ? "text-gray-500" : "text-white"}`}>
+            {isSubmitting 
+              ? "Please wait..." 
+              : currentPage === totalPages - 1
+                ? isEditMode
+                  ? "Save Changes"
+                  : "Finish Setup"
+                : "Continue"
+            }
           </Text>
         </Pressable>
       </View>

@@ -5,6 +5,9 @@ import {
   TextInput,
   Pressable,
   useColorScheme,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useOnboardingStore } from "../../store";
 import { MetricInputProps } from "../../types";
@@ -15,22 +18,23 @@ const MetricInput = ({
   value,
   onChangeText,
   unit,
-  keyboardType,
+  keyboardType = "numeric",
 }: MetricInputProps) => (
-  <View className="mb-8">
-    <Text className="text-base font-semibold text-gray-500 dark:text-gray-400 mb-2">
+  <View className="mb-6">
+    <Text className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">
       {label}
     </Text>
-    <View className="flex-row items-center bg-gray-100 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700">
+    <View className="flex-row items-center bg-white dark:bg-slate-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-sm">
       <TextInput
-        className="flex-1 text-2xl font-bold text-gray-800 dark:text-white p-4"
+        className="flex-1 text-3xl font-bold text-gray-800 dark:text-white p-6"
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         placeholder="0"
         placeholderTextColor="#9CA3AF"
+        returnKeyType="done"
       />
-      <Text className="text-lg font-semibold text-gray-400 dark:text-gray-500 pr-4">
+      <Text className="text-xl font-semibold text-gray-500 dark:text-gray-400 pr-6">
         {unit}
       </Text>
     </View>
@@ -70,31 +74,46 @@ export const MetricsScreen = () => {
   }, [localAge, localHeight, localWeight]);
 
   return (
-    <View className="flex-1 justify-center">
-      <View className="px-6">
-        <Text className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-8">
-          Your Basic Metrics
-        </Text>
+    <KeyboardAvoidingView 
+      className="flex-1" 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="px-6">
+          <Text className="text-4xl font-bold text-gray-800 dark:text-white text-center mb-3">
+            Your Basic Metrics
+          </Text>
+          <Text className="text-lg text-gray-500 dark:text-gray-400 text-center mb-12">
+            Help us personalize your fitness journey
+          </Text>
 
-        <MetricInput
-          label="Age"
-          value={localAge}
-          onChangeText={setLocalAge}
-          unit="years"
-        />
-        <MetricInput
-          label="Height"
-          value={localHeight}
-          onChangeText={setLocalHeight}
-          unit="cm"
-        />
-        <MetricInput
-          label="Current Weight"
-          value={localWeight}
-          onChangeText={setLocalWeight}
-          unit="kg"
-        />
-      </View>
-    </View>
+          <MetricInput
+            label="Age"
+            value={localAge}
+            onChangeText={setLocalAge}
+            unit="years"
+            keyboardType="numeric"
+          />
+          <MetricInput
+            label="Height"
+            value={localHeight}
+            onChangeText={setLocalHeight}
+            unit="cm"
+            keyboardType="numeric"
+          />
+          <MetricInput
+            label="Current Weight"
+            value={localWeight}
+            onChangeText={setLocalWeight}
+            unit="kg"
+            keyboardType="decimal-pad"
+          />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };

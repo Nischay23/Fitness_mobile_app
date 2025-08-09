@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Tabs } from "expo-router";
+import {
+  Tabs,
+  useRouter,
+  useNavigation,
+} from "expo-router";
 import {
   MaterialCommunityIcons,
   FontAwesome5,
@@ -45,32 +49,54 @@ export default function TabLayout(): React.ReactElement {
     return () => subscription.unsubscribe();
   }, [currentUser, updateTodayStats]);
 
-  const CustomPlusButton = () => (
-    <View className="items-center justify-center -mt-6 px-1">
-      <TouchableOpacity
-        onPress={() => setShowQuickLogModal(true)}
-        style={{
-          backgroundColor: colors.primary,
-          shadowColor: colors.primary,
-          shadowOffset: {
-            width: 0,
-            height: 6,
-          },
-          shadowOpacity: 0.4,
-          shadowRadius: 12,
-          elevation: 12,
-        }}
-        className="w-16 h-16 rounded-full items-center justify-center border-4 border-white dark:border-gray-900"
-        activeOpacity={0.8}
-      >
-        <MaterialCommunityIcons
-          name="plus"
-          size={32}
-          color="white"
-        />
-      </TouchableOpacity>
-    </View>
-  );
+  const CustomPlusButton = () => {
+    const router = useRouter();
+    const navigation = useNavigation();
+
+    const handlePress = () => {
+      const state = navigation.getState();
+      // The `state` object might be undefined when the navigator is not yet mounted.
+      if (!state) {
+        return;
+      }
+      const currentRoute = state.routes[state.index];
+
+      if (currentRoute.name === "feeds/index") {
+        router.push("/(tabs)/create");
+      } else {
+        setShowQuickLogModal(true);
+      }
+    };
+
+    return (
+      <View className="items-center justify-center -mt-6 px-1">
+        <TouchableOpacity
+          onPress={handlePress}
+          style={{
+            backgroundColor: colors.primary,
+            shadowColor: colors.primary,
+            shadowOffset: {
+              width: 0,
+              height: 6,
+            },
+            shadowOpacity: 0.4,
+            shadowRadius: 12,
+            elevation: 12,
+            borderWidth: 4,
+            borderColor: colors.surface, // Use theme surface color for border
+          }}
+          className="w-16 h-16 rounded-full items-center justify-center"
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons
+            name="plus"
+            size={32}
+            color={colors.text.inverse} // Use theme inverse text color
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   // Enhanced tab icon component with smooth animations
   const TabIcon = ({
@@ -129,11 +155,9 @@ export default function TabLayout(): React.ReactElement {
               ? colors.text.muted
               : colors.text.secondary,
           tabBarStyle: {
-            backgroundColor:
-              colorScheme === "dark"
-                ? "#1a1a1a" // Modern dark background
-                : "#ffffff", // Clean white for light mode
-            borderTopWidth: 0, // Remove top border completely
+            backgroundColor: colors.surface, // Use theme surface color
+            borderTopWidth: 0,
+            borderTopColor: colors.border, // Use theme border color
             position: "absolute",
             elevation: colorScheme === "dark" ? 0 : 8,
             shadowColor:
@@ -147,7 +171,6 @@ export default function TabLayout(): React.ReactElement {
             shadowOpacity: colorScheme === "dark" ? 0 : 0.1,
             shadowRadius: 8,
             height: 65,
-
             paddingTop: 6,
             paddingHorizontal: 8,
             borderRadius: 0,

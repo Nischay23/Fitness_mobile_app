@@ -38,20 +38,20 @@ const GoalCard = ({
 }: GoalCardProps) => (
   <Pressable
     onPress={onPress}
-    className={`p-6 rounded-2xl border-2 mb-4 flex-row items-center
-      ${isSelected ? "bg-green-500/10 border-green-500" : "bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-gray-700"}`}
+    className={`p-6 rounded-2xl border-2 mb-6 flex-row items-center shadow-sm
+      ${isSelected ? "bg-green-500/10 border-green-500" : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700"}`}
   >
     <View
-      className={`w-12 h-12 rounded-full justify-center items-center mr-4 ${isSelected ? "bg-green-500" : "bg-gray-200 dark:bg-slate-700"}`}
+      className={`w-16 h-16 rounded-2xl justify-center items-center mr-6 ${isSelected ? "bg-green-500" : "bg-gray-100 dark:bg-slate-700"}`}
     >
       <Feather
         name={icon}
-        size={24}
+        size={28}
         color={isSelected ? "white" : "#6B7280"}
       />
     </View>
     <Text
-      className={`text-xl font-bold ${isSelected ? "text-gray-800 dark:text-white" : "text-gray-800 dark:text-white"}`}
+      className={`text-2xl font-bold flex-1 ${isSelected ? "text-gray-800 dark:text-white" : "text-gray-800 dark:text-white"}`}
     >
       {title}
     </Text>
@@ -63,20 +63,27 @@ export const GoalScreen = () => {
   const { goalType, setData } = useOnboardingStore();
 
   return (
-    <View className="flex-1 justify-center">
-      <Text className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-10">
-        What is your primary goal?
-      </Text>
+    <View className="flex-1 justify-center px-6">
+      <View className="mb-16">
+        <Text className="text-4xl font-bold text-gray-800 dark:text-white text-center mb-3">
+          What is your primary goal?
+        </Text>
+        <Text className="text-lg text-gray-500 dark:text-gray-400 text-center">
+          Choose the goal that matters most to you right now
+        </Text>
+      </View>
 
-      {GOAL_OPTIONS.map((goal) => (
-        <GoalCard
-          key={goal.key}
-          title={goal.title}
-          icon={goal.icon}
-          isSelected={goalType === goal.key}
-          onPress={() => setData({ goalType: goal.key })}
-        />
-      ))}
+      <View>
+        {GOAL_OPTIONS.map((goal) => (
+          <GoalCard
+            key={goal.key}
+            title={goal.title}
+            icon={goal.icon}
+            isSelected={goalType === goal.key}
+            onPress={() => setData({ goalType: goal.key })}
+          />
+        ))}
+      </View>
     </View>
   );
 };

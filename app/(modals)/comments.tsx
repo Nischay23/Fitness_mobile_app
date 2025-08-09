@@ -13,7 +13,6 @@ import {
   Alert,
   Image,
   useColorScheme,
-  SafeAreaView,
   StatusBar,
 } from "react-native";
 import {
@@ -22,6 +21,7 @@ import {
   useRouter,
 } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // Add this import
 import { supabase } from "@/lib/supabase";
 import { COLORS } from "@/constants/theme";
 
@@ -30,6 +30,7 @@ export default function CommentsScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
   const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets(); // Add this hook
 
   const { post_id, post_author_id } = useLocalSearchParams<{
     post_id: string;
@@ -96,12 +97,25 @@ export default function CommentsScreen() {
     >
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={colors.background}
+        backgroundColor="transparent" // Changed from colors.background
+        translucent={true} // Added translucent
       />
 
-      {/* Header */}
-      <SafeAreaView
-        style={{ backgroundColor: colors.background }}
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Header with proper safe area handling */}
+      <View
+        style={{
+          backgroundColor: colors.background,
+          paddingTop: insets.top, // Add safe area top padding
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          shadowColor: isDark ? "#000" : "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
       >
         <View
           style={{
@@ -111,8 +125,6 @@ export default function CommentsScreen() {
             paddingHorizontal: 20,
             paddingVertical: 16,
             backgroundColor: colors.background,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border,
           }}
         >
           <View
@@ -150,7 +162,7 @@ export default function CommentsScreen() {
             </Text>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
 
       {isLoading ? (
         <View
@@ -243,7 +255,7 @@ export default function CommentsScreen() {
         />
       )}
 
-      {/* Comment Input */}
+      {/* Comment Input with safe area handling */}
       <View
         style={{
           backgroundColor: colors.background,
@@ -251,6 +263,7 @@ export default function CommentsScreen() {
           borderTopColor: colors.border,
           paddingHorizontal: 16,
           paddingVertical: 12,
+          paddingBottom: Math.max(12, insets.bottom), // Add safe area bottom padding
         }}
       >
         <View

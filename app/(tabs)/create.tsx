@@ -11,13 +11,14 @@ import {
   Platform,
   ScrollView,
   useColorScheme,
-  SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { decode } from "base64-arraybuffer";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // Add this import
 import { COLORS } from "@/constants/theme";
 
 export default function CreateScreen() {
@@ -25,19 +26,22 @@ export default function CreateScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const colors = COLORS[colorScheme];
   const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets(); // Add this hook
 
   const [caption, setCaption] = useState("");
-  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [selectedImage, setSelectedImage] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
   const [isSharing, setIsSharing] = useState(false);
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
-    });
+    const result =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0]);
@@ -45,10 +49,14 @@ export default function CreateScreen() {
   };
 
   const takePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    
+    const permissionResult =
+      await ImagePicker.requestCameraPermissionsAsync();
+
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "Camera permission is required to take photos.");
+      Alert.alert(
+        "Permission Required",
+        "Camera permission is required to take photos."
+      );
       return;
     }
 
@@ -64,17 +72,19 @@ export default function CreateScreen() {
     }
   };
 
-  const uploadImage = async (imageAsset: ImagePicker.ImagePickerAsset) => {
+  const uploadImage = async (
+    imageAsset: ImagePicker.ImagePickerAsset
+  ) => {
     if (!imageAsset.base64) {
       throw new Error("No image data");
     }
 
-    const fileExt = imageAsset.uri.split('.').pop();
+    const fileExt = imageAsset.uri.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `posts/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('posts')
+      .from("posts")
       .upload(filePath, decode(imageAsset.base64), {
         contentType: `image/${fileExt}`,
       });
@@ -84,7 +94,7 @@ export default function CreateScreen() {
     }
 
     const { data } = supabase.storage
-      .from('posts')
+      .from("posts")
       .getPublicUrl(filePath);
 
     return data.publicUrl;
@@ -92,7 +102,10 @@ export default function CreateScreen() {
 
   const handleShare = async () => {
     if (!caption.trim() && !selectedImage) {
-      Alert.alert("Nothing to Share", "Please add a caption or select an image.");
+      Alert.alert(
+        "Nothing to Share",
+        "Please add a caption or select an image."
+      );
       return;
     }
 
@@ -104,26 +117,32 @@ export default function CreateScreen() {
         imageUrl = await uploadImage(selectedImage);
       }
 
-      const { data, error } = await supabase.functions.invoke('create-post', {
-        body: {
-          content: caption.trim(),
-          image_url: imageUrl,
-        },
-      });
+      const { data, error } =
+        await supabase.functions.invoke("create-post", {
+          body: {
+            content: caption.trim(),
+            image_url: imageUrl,
+          },
+        });
 
       if (error) throw error;
 
       // Reset form
       setCaption("");
       setSelectedImage(null);
-      
-      Alert.alert("Success", "Your post has been shared!", [
-        { text: "OK", onPress: () => router.push("/(tabs)") }
-      ]);
 
+      Alert.alert("Success", "Your post has been shared!", [
+        {
+          text: "OK",
+          onPress: () => router.push("/(tabs)"),
+        },
+      ]);
     } catch (error: any) {
-      console.error('Error creating post:', error);
-      Alert.alert("Error", "Failed to share your post. Please try again.");
+      console.error("Error creating post:", error);
+      Alert.alert(
+        "Error",
+        "Failed to share your post. Please try again."
+      );
     } finally {
       setIsSharing(false);
     }
@@ -134,48 +153,112 @@ export default function CreateScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent={true}
+      />
+
       <Stack.Screen
         options={{
           headerShown: false,
         }}
       />
 
-      {/* Header */}
-      <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-        <View className="flex-row items-center justify-between px-4 py-3">
+      {/* Header with proper safe area handling */}
+      <View
+        style={{
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          shadowColor: isDark ? "#000" : "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+          }}
+        >
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-8 h-8 items-center justify-center rounded-full"
+            style={{
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 12,
+              backgroundColor: colors.surface,
+            }}
           >
-            <Ionicons 
-              name="close" 
-              size={20} 
-              color={isDark ? '#D1D5DB' : '#6B7280'} 
+            <Ionicons
+              name="close"
+              size={20}
+              color={colors.text.primary}
             />
           </TouchableOpacity>
 
-          <Text className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "bold",
+              color: colors.text.primary,
+            }}
+          >
             Create Post
           </Text>
 
           <TouchableOpacity
             onPress={handleShare}
-            disabled={isSharing || (!caption.trim() && !selectedImage)}
-            className={`px-4 py-2 rounded-full ${
-              (!caption.trim() && !selectedImage) || isSharing
-                ? (isDark ? 'bg-gray-700' : 'bg-gray-300')
-                : 'bg-teal-500'
-            }`}
+            disabled={
+              isSharing ||
+              (!caption.trim() && !selectedImage)
+            }
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 20,
+              backgroundColor:
+                (!caption.trim() && !selectedImage) ||
+                isSharing
+                  ? colors.surface
+                  : colors.primary,
+              opacity:
+                (!caption.trim() && !selectedImage) ||
+                isSharing
+                  ? 0.6
+                  : 1,
+            }}
           >
             {isSharing ? (
-              <ActivityIndicator size="small" color="white" />
+              <ActivityIndicator
+                size="small"
+                color="white"
+              />
             ) : (
-              <Text className={`font-semibold ${
-                (!caption.trim() && !selectedImage)
-                  ? (isDark ? 'text-gray-400' : 'text-gray-500')
-                  : 'text-white'
-              }`}>
+              <Text
+                style={{
+                  fontWeight: "600",
+                  color:
+                    !caption.trim() && !selectedImage
+                      ? colors.text.secondary
+                      : "white",
+                }}
+              >
                 Share
               </Text>
             )}
@@ -183,25 +266,57 @@ export default function CreateScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView 
-        className="flex-1" 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={
+          Platform.OS === "ios" ? "padding" : "height"
+        }
       >
-        <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Caption Input */}
-          <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl p-4 mb-4 ${isDark ? 'border-gray-700' : 'border-gray-200'} border`}>
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
             <TextInput
               value={caption}
               onChangeText={setCaption}
               placeholder="What's on your mind? Share your fitness journey..."
-              placeholderTextColor={isDark ? '#6B7280' : '#9CA3AF'}
-              className={`text-base leading-6 min-h-24 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              placeholderTextColor={colors.text.secondary}
+              style={{
+                fontSize: 16,
+                lineHeight: 24,
+                minHeight: 96,
+                color: colors.text.primary,
+                textAlignVertical: "top",
+              }}
               multiline
-              textAlignVertical="top"
               maxLength={500}
             />
-            <View className="flex-row justify-between items-center mt-2">
-              <Text className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.text.secondary,
+                }}
+              >
                 {caption.length}/500
               </Text>
             </View>
@@ -209,90 +324,205 @@ export default function CreateScreen() {
 
           {/* Image Section */}
           {selectedImage ? (
-            <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl overflow-hidden mb-4 ${isDark ? 'border-gray-700' : 'border-gray-200'} border`}>
-              <View className="relative">
-                <Image 
-                  source={{ uri: selectedImage.uri }} 
-                  className="w-full h-80"
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 16,
+                overflow: "hidden",
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <View style={{ position: "relative" }}>
+                <Image
+                  source={{ uri: selectedImage.uri }}
+                  style={{ width: "100%", height: 320 }}
                   resizeMode="cover"
                 />
                 <TouchableOpacity
                   onPress={removeImage}
-                  className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full items-center justify-center"
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    width: 32,
+                    height: 32,
+                    backgroundColor: "rgba(0,0,0,0.5)",
+                    borderRadius: 16,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <Ionicons name="close" size={16} color="white" />
+                  <Ionicons
+                    name="close"
+                    size={16}
+                    color="white"
+                  />
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 mb-4 ${isDark ? 'border-gray-700' : 'border-gray-200'} border`}>
-              <View className="items-center">
-                <Ionicons 
-                  name="image-outline" 
-                  size={48} 
-                  color={isDark ? '#6B7280' : '#9CA3AF'} 
-                  className="mb-4"
-                />
-                <Text className={`text-center font-medium mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Add a photo to your post
-                </Text>
-                <View className="flex-row space-x-3">
-                  <TouchableOpacity
-                    onPress={pickImage}
-                    className={`flex-1 py-3 px-4 rounded-xl border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 16,
+                padding: 24,
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: "center",
+              }}
+            >
+              <Ionicons
+                name="image-outline"
+                size={48}
+                color={colors.text.secondary}
+                style={{ marginBottom: 16 }}
+              />
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontWeight: "600",
+                  marginBottom: 16,
+                  color: colors.text.primary,
+                }}
+              >
+                Add a photo to your post
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 12,
+                  width: "100%",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: isDark
+                      ? colors.surface
+                      : "#f8f9fa",
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
                   >
-                    <View className="flex-row items-center justify-center">
-                      <Ionicons 
-                        name="images-outline" 
-                        size={20} 
-                        color={isDark ? '#9CA3AF' : '#6B7280'} 
-                      />
-                      <Text className={`ml-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Gallery
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={takePhoto}
-                    className={`flex-1 py-3 px-4 rounded-xl border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'}`}
+                    <Ionicons
+                      name="images-outline"
+                      size={20}
+                      color={colors.text.secondary}
+                    />
+                    <Text
+                      style={{
+                        marginLeft: 8,
+                        fontWeight: "600",
+                        color: colors.text.primary,
+                      }}
+                    >
+                      Gallery
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={takePhoto}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: isDark
+                      ? colors.surface
+                      : "#f8f9fa",
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
                   >
-                    <View className="flex-row items-center justify-center">
-                      <Ionicons 
-                        name="camera-outline" 
-                        size={20} 
-                        color={isDark ? '#9CA3AF' : '#6B7280'} 
-                      />
-                      <Text className={`ml-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Camera
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
+                    <Ionicons
+                      name="camera-outline"
+                      size={20}
+                      color={colors.text.secondary}
+                    />
+                    <Text
+                      style={{
+                        marginLeft: 8,
+                        fontWeight: "600",
+                        color: colors.text.primary,
+                      }}
+                    >
+                      Camera
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
             </View>
           )}
 
           {/* Tips Section */}
-          <View className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl p-4 ${isDark ? 'border-gray-700' : 'border-gray-200'} border`}>
-            <View className="flex-row items-center mb-3">
-              <Ionicons 
-                name="bulb-outline" 
-                size={20} 
-                color="#00D4AA" 
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Ionicons
+                name="bulb-outline"
+                size={20}
+                color={colors.primary}
               />
-              <Text className="text-teal-500 text-sm font-semibold ml-2">
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 14,
+                  fontWeight: "600",
+                  marginLeft: 8,
+                }}
+              >
                 Sharing Tips
               </Text>
             </View>
-            <Text className={`text-sm leading-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              • Share your workout achievements{'\n'}
-              • Post healthy meal ideas{'\n'}
-              • Inspire others with your progress{'\n'}
-              • Ask questions and get advice
+            <Text
+              style={{
+                fontSize: 14,
+                lineHeight: 20,
+                color: colors.text.secondary,
+              }}
+            >
+              • Share your workout achievements{"\n"}• Post
+              healthy meal ideas{"\n"}• Inspire others with
+              your progress{"\n"}• Ask questions and get
+              advice
             </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
